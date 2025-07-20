@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="description" content="Sistema de Inspeção de Estruturas Metálicas">
+    <title>Inspeção Estruturas - Ecovias Ponte</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root { --cor-primaria: #2980b9; --cor-header: #2c3e50; --cor-onedrive: #0078D4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e5e7ef; min-height: 100vh; padding: 10px; font-size: 16px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, var(--cor-header) 0%, var(--cor-primaria) 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.5em; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+        .main-content { padding: 15px; max-height: 85vh; overflow-y: auto; }
+        .tabs { display: flex; background: #f0f2f5; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .tab { flex: 1; padding: 12px; background: transparent; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s ease; color: #6c757d; font-size: 14px; }
+        .tab.active { background: var(--cor-primaria); color: white; }
+        .tab:disabled { background-color: #e9ecef; color: #adb5bd; cursor: not-allowed; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .ficha-section { margin-bottom: 15px; background: #fafbfc; border-radius: 9px; padding: 15px; border: 1px solid #e9ecef;}
+        .ficha-section h3 { color: var(--cor-header); border-bottom: 2px solid #f0f2f5; padding-bottom: 8px; margin-bottom: 15px; }
+        .ficha-form-group { margin-bottom:12px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+        .ficha-form-group label { flex-basis:130px; font-weight:600; font-size: 14px; color: #495057;}
+        .ficha-form-group input, .ficha-form-group select, .ficha-form-group textarea { flex:1; padding:10px; border-radius:8px; border:1.5px solid #d8dde8; font-size:14px; background:#fff; }
+        .registro-form { background:#f5f6fa; border-radius:10px; padding:15px; border:1px solid #c8d3e6; margin:15px auto; }
+        .registro-form label { font-size:14px; font-weight:600; display:block; margin-bottom:5px; }
+        .registro-form input, .registro-form select, .registro-form textarea { width:100%; margin-bottom:10px; padding:8px; border-radius:6px; border:1px solid #b7bed7; background:#fafbfc; font-size:14px; }
+        .registros-list { margin-top: 15px; }
+        .registro-item { background:#fdfdff; border-left:4px solid #5a67d8; border-radius:7px; padding:10px 12px; margin-bottom:8px; font-size:14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .registro-item.foto-geral { border-left-color: #1abc9c; }
+        .lista-inspecoes { max-height: 50vh; overflow-y: auto; padding-right: 5px; }
+        .inspecao-card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .inspecao-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .inspecao-card-header h4 { color: var(--cor-header); margin: 0; font-size: 16px; }
+        .inspecao-card-body p { color: #6c757d; font-size: 13px; margin: 0 0 4px; }
+        .botoes-acao button { font-size: 12px; padding: 6px 12px; margin-left: 5px; border-radius: 20px; }
+        .btn { border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; border: none; padding: 12px 25px; font-size: 14px; text-align: center; }
+        .btn-primary { background: var(--cor-primaria); color: white; }
+        .btn-secondary { background: #e74c3c; color: white; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-info { background: #9b59b6; color: white; }
+        .btn-export { margin: 5px; padding: 10px 15px; font-size: 12px; }
+        .btn-excel { background: #1D6F42; color: white; }
+        .btn-pdf { background: #B82424; color: white; }
+
+        .btn-onedrive { background: var(--cor-onedrive); color: white; text-decoration: none; display: inline-block; }
+        .botoes-finais { text-align: center; margin-top: 20px; display:flex; gap: 10px; }
+        .hidden { display: none; }
+        .label-oculto { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        #croquiContainer { position: relative; cursor: crosshair; margin-top: 15px; border: 2px solid #ddd; padding: 5px; background: #fff; }
+        #croquiImage { max-width: 100%; display: block; }
+        .marker { position: absolute; width: 24px; height: 24px; background-color: #e74c3c; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.4); transform: translate(-50%, -50%); user-select: none; cursor: pointer; transition: all 0.2s ease; }
+        .marker:hover { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.6); }
+        .marker.arrastando { transform: translate(-50%, -50%) scale(1.2); box-shadow: 0 6px 12px rgba(0,0,0,0.8); z-index: 1000; }
+        .marker.editing { background-color: #f39c12; }
+        @media (max-width: 600px) { body { padding: 5px; font-size: 14px; } .container { border-radius: 0; } .main-content { padding: 10px; } .ficha-form-group { flex-direction: column; align-items: stretch; gap: 5px; } .ficha-form-group label { flex-basis: auto; } .botoes-acao, .botoes-finais, .tabs, .export-buttons div { flex-direction: column; } .btn-export { width: 100%; margin: 5px 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Inspeção de Estruturas Metálicas Auxiliares</h1>
+            <p>Ecovias Ponte - Conforme ABNT NBR 9452:2023</p>
+        </div>
+        <div class="main-content">
+            <div class="tabs">
+                <button type="button" class="tab active" onclick="showTab('listaInspecoesTab')">📋 Lista de Inspeções</button>
+                <button type="button" class="tab" id="formTab" onclick="showTab('formTabContent')" disabled>📝 Formulário de Inspeção</button>
+            </div>
+
+            <div id="listaInspecoesTab" class="tab-content active">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+                    <button type="button" class="btn btn-primary" style="width:auto;" onclick="iniciarNovaInspecao()">➕ Nova Inspeção</button>
+                    <div class="export-buttons">
+                         <button type="button" class="btn-export btn-excel" onclick="exportarExcelFormatado(inspecoes)">Excel</button>
+                         <button type="button" class="btn-export btn-pdf" onclick="exportarPDF(inspecoes)">PDF</button>
+                         <button type="button" class="btn-export btn-png" onclick="gerarCroquiPNG()" style="background: #28a745; color: white;">🖼️ PNG Croqui</button>
+                         <a href="https://franchettispa-my.sharepoint.com/:f:/g/personal/romulo_gomes_franchetti_tech/EslgJsmau29IqYArJCJR-MMBwzKGvJ601PQo5OaIzHd1pg?e=kXTlmG" target="_blank" class="btn-export btn-onedrive">☁️ Abrir OneDrive</a>
+                    </div>
+                </div>
+                <div class="ficha-section">
+                    <div class="ficha-form-group">
+                       <label for="fileInput">Carregar Estruturas (Excel):</label>
+                       <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.tsv,.txt" onchange="carregarEstruturas(event)" style="flex:1;">
+                       <small style="color:#666; font-size:12px; margin-top:5px; display:block;">💡 Use "Baixar Template Excel" para criar um arquivo com as colunas corretas.</small>
+                    </div>
+                    <div class="ficha-form-group">
+                       <button type="button" class="btn btn-info" onclick="mostrarEstruturasCarregadas()" style="margin-top:10px;">📊 Ver Estruturas Carregadas</button>
+                       <button type="button" class="btn btn-success" onclick="exportarTemplateExcel()" style="margin-top:10px;">📥 Baixar Template Excel</button>
+                    </div>
+                    <hr style="border:0; border-top: 1px solid #eee; margin: 15px 0;">
+                    <label for="buscaInspecao" class="label-oculto">Buscar Inspeção</label>
+                    <input id="buscaInspecao" type="text" oninput="atualizarListaInspecoes()" placeholder="Buscar por estrutura, inspetor ou data..." style="width:100%; padding:10px;">
+                    <div id="botoesBusca" class="export-buttons hidden" style="margin-top: 10px; text-align: right;">
+                        <span style="font-size: 14px; font-weight: 600; color: #333; margin-right: 10px;">Exportar Resultado da Busca:</span>
+                        <button type="button" class="btn-export btn-excel" onclick="exportarExcelFormatado(inspecoesVisiveis)">Excel</button>
+                        <button type="button" class="btn-export btn-pdf" onclick="exportarPDF(inspecoesVisiveis)">PDF</button>
+                    </div>
+                </div>
+                <div class="lista-inspecoes" id="listaInspecoes"></div>
+            </div>
+
+            <div id="formTabContent" class="tab-content">
+                <form id="inspectionForm" onsubmit="return false;">
+                    <div class="ficha-section">
+                        <h3>Dados da Estrutura e Inspeção</h3>
+                        <div class="ficha-form-group"><label for="selectElemento">Escolher estrutura:</label><select id="selectElemento" onchange="selecionarEstrutura(this.value)"></select></div>
+                        <div class="ficha-form-group"><label for="estrutura">ID da Estrutura:</label><input type="text" id="estrutura" readonly></div>
+                        <div class="ficha-form-group"><label for="localizacaoInicial">Localização Inicial:</label><input type="text" id="localizacaoInicial" readonly></div>
+                        <div class="ficha-form-group"><label for="localizacaoFinal">Localização Final:</label><input type="text" id="localizacaoFinal" readonly></div>
+                        <div class="ficha-form-group"><label for="pista">Pista:</label><input type="text" id="pista" readonly></div>
+                        <div class="ficha-form-group"><label for="lado">Lado:</label><input type="text" id="lado" readonly></div>
+                        <div class="ficha-form-group"><label for="latitude">Latitude:</label><input type="text" id="latitude" readonly></div>
+                        <div class="ficha-form-group"><label for="longitude">Longitude:</label><input type="text" id="longitude" readonly></div>
+                        <div class="ficha-form-group"><label for="largura">Largura (m):</label><input type="text" id="largura" readonly></div>
+                        <div class="ficha-form-group"><label for="altura">Altura (m):</label><input type="text" id="altura" readonly></div>
+                        <div class="ficha-form-group"><label for="observacoesEstrutura">Observações:</label><textarea id="observacoesEstrutura" placeholder="Digite observações sobre a estrutura..."></textarea></div>
+                        <div class="ficha-form-group"><label for="inspetor">Inspetor da Inspeção:</label><input type="text" id="inspetor"></div>
+                        <div class="ficha-form-group"><label for="data">Data/hora da Inspeção:</label><input type="datetime-local" id="data"></div>
+                    </div>
+
+                    <div class="ficha-section">
+                        <h3>Croqui da Estrutura</h3>
+                        <div class="ficha-form-group">
+                            <label for="tipoCroqui">Selecionar Croqui:</label>
+                            <select id="tipoCroqui" onchange="selecionarCroqui(this.value)">
+                                <option value="">Selecione...</option>
+                                <option value="portico1">Pórtico (1 Pista)</option>
+                                <option value="portico2">Pórtico (2 Pistas)</option>
+                                <option value="semiportico">Semipórtico</option>
+                            </select>
+                        </div>
+                        <div id="croquiContainer" class="hidden">
+                            <img id="croquiImage" src="" alt="Croqui da estrutura">
+                            <div id="marcadoresContainer"></div>
+                        </div>
+                        <div id="croquiButtons" class="hidden" style="text-align: center; margin-top: 10px;">
+                            <button type="button" class="btn btn-success" onclick="gerarCroquiPNG()" style="font-size: 12px; padding: 8px 16px; margin-right: 10px;">
+                                🖼️ Gerar PNG do Croqui
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="testarArquivo()" style="font-size: 12px; padding: 8px 16px; margin-right: 10px;">
+                                🔍 Testar Arquivo
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="ativarModoArrastar()" id="btnArrastar" style="font-size: 12px; padding: 8px 16px;">
+                                ✋ Ativar Arrastar Marcadores
+                            </button>
+                        </div>
+                        <p id="croquiHelpText" class="hidden" style="text-align: center; font-size: 12px; color: #666; margin-top: 5px;">Clique na imagem para adicionar um registro.</p>
+                    </div>
+
+                    <div class="ficha-section">
+                        <h3>Registros de Anomalias e Fotos</h3>
+                        <button type="button" class="btn btn-primary" onclick="abrirFormRegistro()">+ Adicionar Registro</button>
+                        <div id="formRegistro" class="registro-form hidden">
+                            <label for="elementoRegistro">Elemento Inspecionado / Registro</label>
+                            <select id="elementoRegistro" required onchange="atualizarAnomaliasPorElemento()">
+                                <option value="">Selecione um item...</option>
+                                <optgroup label="Registros Gerais"><option value="Foto Geral da Estrutura">Foto Geral da Estrutura</option></optgroup>
+                                <optgroup label="Fundação e Base"><option value="Bloco de Fundação">Bloco de Fundação</option><option value="Placa de Base da Coluna">Placa de Base da Coluna</option><option value="Chumbadores (Parafusos de Ancoragem)">Chumbadores (Parafusos de Ancoragem)</option></optgroup>
+                                <optgroup label="Estrutura Principal"><option value="Coluna / Montante Principal">Coluna / Montante Principal</option><option value="Travessa / Viga Principal">Travessa / Viga Principal</option></optgroup>
+                                <optgroup label="Estrutura Treliçada"><option value="Banzo Superior (de treliça)">Banzo Superior (de treliça)</option><option value="Banzo Inferior (de treliça)">Banzo Inferior (de treliça)</option><option value="Montante (de treliça)">Montante (de treliça)</option><option value="Diagonal (de treliça)">Diagonal (de treliça)</option></optgroup>
+                                <optgroup label="Conexões e Fixadores"><option value="Chapa de Ligação (Gusset)">Chapa de Ligação (Gusset)</option><option value="Soldas">Soldas</option><option value="Parafusos, Porcas e Arruelas">Parafusos, Porcas e Arruelas</option></optgroup>
+                                <optgroup label="Acessórios e Outros"><option value="Suporte de Placa de Sinalização">Suporte de Placa de Sinalização</option><option value="Sistema de Iluminação (Luminária, Fiação)">Sistema de Iluminação (Luminária, Fiação)</option></optgroup>
+                            </select>
+                            
+                            <label for="tipoAnomalia">Tipo de anomalia:</label>
+                            <select id="tipoAnomalia" onchange="handleTipoAnomaliaChange(this)"></select>
+                            <input type="text" id="tipoAnomaliaOutro" class="hidden" placeholder="Especifique a outra anomalia">
+                            
+                            <div class="ficha-section" style="padding:10px; margin: 10px 0;">
+                                <div style="display:flex; gap:10px;"><div style="flex:1;"><label for="tipo_foto">Fonte:</label><select id="tipo_foto"><option value="camera">Câmera</option><option value="drone">Drone</option></select></div><div style="flex:1;"><label for="qtdFotos">Qtd:</label><input type="number" id="qtdFotos" value="2" min="1"></div></div>
+                                <div id="contador_camera_group"><label for="fotoInicialCamera">Nº Inicial (Câmera):</label><input type="number" id="fotoInicialCamera" min="1"></div>
+                                <div id="contador_drone_group" class="hidden"><label for="fotoInicialDrone">Nº Inicial (Drone):</label><input type="number" id="fotoInicialDrone" min="1"></div>
+                                <div id="fotoInfo" style="text-align:center; background:#d4edda; padding:8px; border-radius:5px; margin-top:10px; font-weight:500;"></div>
+                            </div>
+                            <label for="observacao">Observações:</label><textarea id="observacao"></textarea>
+                            
+                            <label>Classificação da Anomalia (NBR 9452)</label>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                                <input type="number" id="classEstrutural" placeholder="Estrutural" min="0" max="5" readonly>
+                                <input type="number" id="classFuncional" placeholder="Funcional" min="0" max="5" readonly>
+                                <input type="number" id="classDurabilidade" placeholder="Durabilidade" min="0" max="5" readonly>
+                            </div>
+                            
+                            <div style="margin-top:15px; display:flex; gap:10px;">
+                               <button type="button" id="btnSalvarRegistro" onclick="salvarRegistro()" class="btn btn-success" style="flex:1;">Adicionar</button>
+                               <button type="button" onclick="fecharFormRegistro()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+                            </div>
+                        </div>
+                        <div id="registrosList" class="registros-list"></div>
+                    </div>
+                    
+                    <div class="botoes-finais">
+                        <button type="button" id="btnSalvarInspecao" class="btn btn-primary" onclick="salvarInspecao()" style="flex:2;">Salvar Inspeção</button>
+                        <button type="button" id="btnCancelar" class="btn btn-secondary" onclick="cancelarEdicao()" style="flex:1;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <canvas id="graficoPizza" class="hidden" width="400" height="250"></canvas>
+
+
+
+    <script>
+    // ---- LÓGICA DE UI E ESTADO ----
+    let idxInspecaoEdicao = null;
+    let inspecaoEmAndamento = {};
+    let idxRegistroEdicao = null;
+    let inspecoesVisiveis = [];
+
+    const croquis = {
+        portico1: "./Portico 1 pista.png",
+        portico2: "./Portico 2 pistas.png",
+        semiportico: "./Semiporticos.png"
+    };
+    
+    // Função para detectar formato de imagem
+    function detectarFormatoImagem(url) {
+        const extensao = url.split('.').pop().toLowerCase();
+        const formatosSuportados = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        
+        if (formatosSuportados.includes(extensao)) {
+            return extensao.toUpperCase();
+        }
+        return 'DESCONHECIDO';
+    }
+    
+    // Função para validar URL de imagem
+    function validarURLImagem(url) {
+        if (!url) return false;
+        
+        // Verificar se é uma URL válida
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            // Se não for URL absoluta, verificar se é caminho relativo
+            return url.startsWith('./') || url.startsWith('../') || url.startsWith('/');
+        }
+    }
+    
+    // Função para verificar se arquivo existe
+    async function verificarArquivoExiste(url) {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch {
+            return false;
+        }
+    }
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+    }
+
+    function limparFormularioGeral() {
+        idxInspecaoEdicao = null;
+        inspecaoEmAndamento = {};
+        document.getElementById('inspectionForm').reset();
+        
+        // Limpar campos específicos do Excel (exceto observações)
+        const camposExcel = [
+            'estrutura', 'localizacaoInicial', 'localizacaoFinal', 'pista', 'lado',
+            'latitude', 'longitude', 'largura', 'altura'
+        ];
+        camposExcel.forEach(campo => {
+            const elemento = document.getElementById(campo);
+            if (elemento) elemento.value = '';
+        });
+        
+        document.getElementById('croquiContainer').classList.add('hidden');
+        document.getElementById('croquiButtons').classList.add('hidden');
+        document.getElementById('marcadoresContainer').innerHTML = '';
+        atualizarListaRegistros([]);
+        
+        // Limpar observações apenas quando iniciar nova inspeção
+        if (idxInspecaoEdicao === null) {
+            document.getElementById('observacoesEstrutura').value = '';
+        }
+    }
+
+    function limparFormRegistro() {
+        const form = document.getElementById('formRegistro');
+        form.querySelector('#elementoRegistro').value = '';
+        form.querySelector('#tipoAnomalia').innerHTML = ''; // Limpa as opções
+        form.querySelector('#tipoAnomaliaOutro').value = '';
+        form.querySelector('#tipoAnomaliaOutro').classList.add('hidden');
+        form.querySelector('#observacao').value = '';
+        form.querySelector('#classEstrutural').value = '';
+        form.querySelector('#classFuncional').value = '';
+        form.querySelector('#classDurabilidade').value = '';
+        form.querySelector('#qtdFotos').value = '2';
+    }
+    
+    function iniciarNovaInspecao() {
+        limparFormularioGeral();
+        inspecaoEmAndamento = { id: Date.now(), contadores: { camera: 1, drone: 1 }, registros: [], tipoCroqui: '', croquiUrl: '' };
+        document.getElementById('formTab').disabled = false;
+        document.getElementById('btnSalvarInspecao').textContent = 'Salvar Nova Inspeção';
+        showTab('formTabContent');
+        document.getElementById('formTab').textContent = '📝 Nova Inspeção';
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('data').value = now.toISOString().slice(0,16);
+        
+        // Garantir que o formulário esteja limpo
+        document.getElementById('estrutura').value = '';
+        document.getElementById('inspetor').value = '';
+        document.getElementById('tipoCroqui').value = '';
+    }
+    
+    function cancelarEdicao() {
+        limparFormularioGeral();
+        fecharFormRegistro();
+        document.getElementById('formTab').disabled = true;
+        document.getElementById('formTab').textContent = '📝 Formulário de Inspeção';
+        showTab('listaInspecoesTab');
+    }
+
+    function abrirFormRegistro(x = null, y = null) {
+        idxRegistroEdicao = null; 
+        limparFormRegistro();
+        document.getElementById('btnSalvarRegistro').textContent = 'Adicionar';
+        document.getElementById('formRegistro').classList.remove('hidden');
+        document.getElementById('fotoInicialCamera').value = inspecaoEmAndamento.contadores.camera;
+        document.getElementById('fotoInicialDrone').value = inspecaoEmAndamento.contadores.drone;
+        if (x !== null && y !== null) {
+            inspecaoEmAndamento.tempMarkerPos = { x, y };
+            // Criar marcador temporário
+            const tempMarker = document.createElement('div');
+            tempMarker.className = 'marker';
+            tempMarker.style.left = `${x}%`;
+            tempMarker.style.top = `${y}%`;
+            tempMarker.style.backgroundColor = '#f39c12';
+            tempMarker.textContent = '?';
+            tempMarker.id = 'tempMarker';
+            document.getElementById('marcadoresContainer').appendChild(tempMarker);
+        }
+        toggleContadorInputs();
+        adicionarEventListeners();
+    }
+
+    function fecharFormRegistro() {
+        idxRegistroEdicao = null; 
+        inspecaoEmAndamento.tempMarkerPos = null;
+        
+        // Remover marcador temporário se existir
+        const tempMarker = document.getElementById('tempMarker');
+        if (tempMarker) {
+            tempMarker.remove();
+        }
+        
+        document.getElementById('formRegistro').classList.add('hidden');
+    }
+    
+    function toggleOutroCampo(selectElement, inputId) {
+        document.getElementById(inputId).classList.toggle('hidden', selectElement.value !== 'Outro');
+    }
+
+    function handleTipoAnomaliaChange(selectElement) {
+        toggleOutroCampo(selectElement, 'tipoAnomaliaOutro');
+        const elemento = document.getElementById('elementoRegistro').value;
+        const tipoAnomalia = selectElement.value;
+        
+        ['classEstrutural', 'classFuncional', 'classDurabilidade'].forEach(id => document.getElementById(id).value = '');
+        
+        const anomaliaDef = (anomaliasPorElemento[elemento] || []).find(a => a.tipo === tipoAnomalia);
+        if (anomaliaDef) {
+            if (anomaliaDef.aspecto === 'Estrutural') document.getElementById('classEstrutural').value = anomaliaDef.nota;
+            else if (anomaliaDef.aspecto === 'Funcional') document.getElementById('classFuncional').value = anomaliaDef.nota;
+            else if (anomaliaDef.aspecto === 'Durabilidade') document.getElementById('classDurabilidade').value = anomaliaDef.nota;
+        }
+    }
+    
+    // ---- VARIÁVEIS DE DADOS E NORMAS ----
+    let inspecoes = JSON.parse(localStorage.getItem('inspecoes_ponte_metalicas_v11') || "[]");
+    const anomaliasPorElemento = {
+        "Bloco de Fundação": [
+            { tipo: "Fissuras ou trincas no concreto", nota: 3, aspecto: "Estrutural" },
+            { tipo: "Desagregação ou desplacamento do concreto", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Armadura exposta com corrosão", nota: 2, aspecto: "Durabilidade" }
+        ],
+        "Placa de Base da Coluna": [
+            { tipo: "Corrosão acentuada", nota: 3, aspecto: "Durabilidade" },
+            { tipo: "Deformação (empenamento)", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Falta de rejunte ou rejunte degradado", nota: 4, aspecto: "Durabilidade" }
+        ],
+        "Chumbadores (Parafusos de Ancoragem)": [
+            { tipo: "Corrosão", nota: 3, aspecto: "Durabilidade" },
+            { tipo: "Porcas frouxas", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Deformação ou trinca no parafuso", nota: 1, aspecto: "Estrutural" }
+        ],
+        "Coluna / Montante Principal": [
+            { tipo: "Corrosão com perda de seção até 20%", nota: 3, aspecto: "Estrutural" },
+            { tipo: "Corrosão com perda de seção acima de 20%", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Deformação por flambagem ou amassamento", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Fissuras ou trincas no material base", nota: 1, aspecto: "Estrutural" },
+            { tipo: "Pintura deteriorada", nota: 4, aspecto: "Durabilidade" }
+        ],
+        "Travessa / Viga Principal": [
+            { tipo: "Corrosão com perda de seção até 20%", nota: 3, aspecto: "Estrutural" },
+            { tipo: "Corrosão com perda de seção acima de 20%", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Deformação excessiva (flecha)", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Fissuras ou trincas no material base", nota: 1, aspecto: "Estrutural" }
+        ],
+        "Banzo Superior (de treliça)": [
+            { tipo: "Corrosão com perda de seção", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Deformação (flambagem)", nota: 2, aspecto: "Estrutural" },
+        ],
+        "Banzo Inferior (de treliça)": [
+            { tipo: "Corrosão com perda de seção", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Fissura por fadiga", nota: 1, aspecto: "Estrutural" }
+        ],
+        "Montante (de treliça)": [{ tipo: "Corrosão com perda de seção", nota: 3, aspecto: "Estrutural" },{ tipo: "Deformação (flambagem)", nota: 2, aspecto: "Estrutural" }],
+        "Diagonal (de treliça)": [{ tipo: "Corrosão com perda de seção", nota: 3, aspecto: "Estrutural" },{ tipo: "Deformação", nota: 2, aspecto: "Estrutural" }],
+        "Chapa de Ligação (Gusset)": [
+            { tipo: "Corrosão acentuada", nota: 3, aspecto: "Durabilidade" },
+            { tipo: "Deformação ou empenamento", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Trincas na chapa", nota: 1, aspecto: "Estrutural" }
+        ],
+        "Soldas": [
+            { tipo: "Trincas na solda ou ZTA", nota: 1, aspecto: "Estrutural" },
+            { tipo: "Corrosão na solda", nota: 3, aspecto: "Durabilidade" },
+            { tipo: "Porosidade ou falta de penetração", nota: 3, aspecto: "Estrutural" }
+        ],
+        "Parafusos, Porcas e Arruelas": [
+            { tipo: "Corrosão", nota: 3, aspecto: "Durabilidade" },
+            { tipo: "Falta de aperto (parafuso frouxo)", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Ausência de conector", nota: 2, aspecto: "Estrutural" },
+            { tipo: "Deformação ou cisalhamento do conector", nota: 1, aspecto: "Estrutural" }
+        ],
+        "Suporte de Placa de Sinalização": [
+            { tipo: "Corrosão", nota: 4, aspecto: "Durabilidade" },
+            { tipo: "Deformado ou danificado", nota: 3, aspecto: "Funcional" },
+            { tipo: "Fixação inadequada", nota: 3, aspecto: "Funcional" }
+        ],
+        "Sistema de Iluminação (Luminária, Fiação)": [
+            { tipo: "Luminária danificada/inoperante", nota: 4, aspecto: "Funcional" },
+            { tipo: "Fiação exposta ou em risco", nota: 3, aspecto: "Funcional" }
+        ]
+    };
+    const caracterizacaoNorma = { 
+        1: { condicao: "Emergencial", estrutural: "Há elementos estruturais principais colapsados, evoluindo para instabilidade da estrutura", funcional: "A OAE não apresenta condições funcionais de utilização", durabilidade: "A OAE se encontra em elevado grau de deterioração" }, 
+        2: { condicao: "Crítica", estrutural: "Há danos gerando grave insuficiência estrutural, requerendo intervenção imediata", funcional: "A estrutura apresenta condições funcionais limitadas", durabilidade: "A estrutura se encontra em elevado grau de deterioração" }, 
+        3: { condicao: "Ruim", estrutural: "Há danos comprometendo a segurança estrutural", funcional: "A estrutura possui funcionalidade visivelmente comprometida", durabilidade: "A estrutura apresenta muitas anomalias" }, 
+        4: { condicao: "Regular", estrutural: "Há danos que podem vir a gerar alguma deficiência", funcional: "A estrutura apresenta desconforto ao usuário", durabilidade: "A estrutura apresenta anomalias de moderada gravidade" }, 
+        5: { condicao: "Boa/Excelente", estrutural: "A estrutura se encontra em condições satisfatórias", funcional: "A estrutura apresenta segurança e conforto adequados", durabilidade: "A estrutura se encontra em condições satisfatórias" }
+    };
+    
+    // Classificações conforme NBR 9452:2023
+    const classificacoesNBR9452 = {
+        1: "Emergencial - Intervenção imediata necessária",
+        2: "Crítica - Intervenção urgente necessária", 
+        3: "Ruim - Intervenção corretiva necessária",
+        4: "Regular - Intervenção pontual necessária",
+        5: "Boa/Excelente - Manutenção preventiva"
+    };
+    
+    // ---- FUNÇÕES DO FORMULÁRIO ----
+    function atualizarAnomaliasPorElemento() {
+        const elemento = document.getElementById('elementoRegistro').value;
+        const anomaliaSelect = document.getElementById('tipoAnomalia');
+        const anomalias = anomaliasPorElemento[elemento] || [];
+        anomaliaSelect.innerHTML = '<option value="">Selecione o tipo...</option>';
+        anomalias.forEach(anomalia => {
+            const option = document.createElement('option');
+            option.value = anomalia.tipo;
+            option.textContent = anomalia.tipo;
+            anomaliaSelect.appendChild(option);
+        });
+        anomaliaSelect.innerHTML += '<option value="Outro">Outro (especificar)</option>';
+        ['classEstrutural', 'classFuncional', 'classDurabilidade'].forEach(id => document.getElementById(id).value = '');
+    }
+    function preencheNotaEstrutural() { 
+        // Esta função não é mais necessária, pois a lógica foi movida para handleTipoAnomaliaChange
+        // Mantida para compatibilidade
+    }
+    function preencheNotaDurab() { 
+        // Esta função não é mais necessária, pois a lógica foi movida para handleTipoAnomaliaChange
+        // Mantida para compatibilidade
+    }
+    function toggleContadorInputs() { 
+        const tipo = document.getElementById('tipo_foto').value; 
+        const cameraGroup = document.getElementById('contador_camera_group');
+        const droneGroup = document.getElementById('contador_drone_group');
+        
+        if (cameraGroup) cameraGroup.classList.toggle('hidden', tipo !== 'camera'); 
+        if (droneGroup) droneGroup.classList.toggle('hidden', tipo !== 'drone'); 
+        updatePhotoInfo(); 
+    }
+    function updatePhotoInfo() { 
+        const tipo = document.getElementById('tipo_foto').value; 
+        const inputInicial = (tipo === 'camera') ? document.getElementById('fotoInicialCamera') : document.getElementById('fotoInicialDrone'); 
+        const numInicial = parseInt(inputInicial?.value) || 1; 
+        const qtd = parseInt(document.getElementById('qtdFotos')?.value) || 0; 
+        const numFinal = (qtd > 0) ? numInicial + qtd - 1 : numInicial; 
+        const fotoInfo = document.getElementById('fotoInfo');
+        if (fotoInfo) fotoInfo.textContent = `Fotos (${tipo}): ${numInicial} a ${numFinal}`; 
+    }
+    // Event listeners serão adicionados quando os elementos existirem
+    function adicionarEventListeners() {
+        ['tipo_foto', 'qtdFotos', 'fotoInicialCamera', 'fotoInicialDrone'].forEach(id => { 
+            const element = document.getElementById(id);
+            if (element) element.addEventListener('input', updatePhotoInfo); 
+        });
+    }
+    function obterCoordenadas() { 
+        // Função removida pois os campos de coordenadas foram removidos da interface
+        alert('Funcionalidade de coordenadas removida da versão atual.');
+    }
+    
+    // --- LÓGICA DE CRUD ---
+    function salvarRegistro() {
+        let elemento = document.getElementById('elementoRegistro').value;
+        let tipoAnomalia = document.getElementById('tipoAnomalia').value;
+        if (tipoAnomalia === 'Outro') { tipoAnomalia = document.getElementById('tipoAnomaliaOutro').value.trim(); }
+
+        let registro = { id: (idxRegistroEdicao !== null) ? inspecaoEmAndamento.registros[idxRegistroEdicao].id : Date.now(), elemento: elemento, tipo: tipoAnomalia, observacao: document.getElementById('observacao').value, tipo_foto: document.getElementById('tipo_foto').value, fotoInicial: (document.getElementById('tipo_foto').value === 'camera') ? document.getElementById('fotoInicialCamera').value : document.getElementById('fotoInicialDrone').value, qtdFotos: document.getElementById('qtdFotos').value, classEstrutural: document.getElementById('classEstrutural').value, classFuncional: document.getElementById('classFuncional').value, classDurabilidade: document.getElementById('classDurabilidade').value };
+        if (!registro.elemento) { alert("Selecione um Elemento."); return; }
+        if (!registro.tipo && registro.elemento !== 'Foto Geral da Estrutura') { alert("Selecione ou especifique um Tipo de Anomalia."); return; }
+        
+        if (inspecaoEmAndamento.tempMarkerPos) {
+            registro.markerPos = inspecaoEmAndamento.tempMarkerPos;
+            inspecaoEmAndamento.tempMarkerPos = null;
+            
+            // Remover marcador temporário
+            const tempMarker = document.getElementById('tempMarker');
+            if (tempMarker) {
+                tempMarker.remove();
+            }
+        }
+
+        if (idxRegistroEdicao !== null) { inspecaoEmAndamento.registros[idxRegistroEdicao] = registro; } 
+        else { inspecaoEmAndamento.registros.push(registro); const novoContador = parseInt(registro.fotoInicial) + parseInt(registro.qtdFotos); if (!isNaN(novoContador)) { inspecaoEmAndamento.contadores[registro.tipo_foto] = novoContador; } }
+        atualizarListaRegistros(inspecaoEmAndamento.registros);
+        fecharFormRegistro();
+    }
+    
+    function atualizarListaRegistros(registros) {
+        const container = document.getElementById('registrosList');
+        if (!registros || registros.length === 0) { container.innerHTML = '<p style="text-align:center; color:#6c757d; padding: 10px;">Nenhum registro adicionado.</p>'; return; }
+        container.innerHTML = registros.map((reg, i) => { 
+            const isFotoGeral = reg.elemento === 'Foto Geral da Estrutura'; 
+            const itemClass = isFotoGeral ? 'registro-item foto-geral' : 'registro-item'; 
+            const titulo = isFotoGeral ? `Registro de Foto Geral` : `${reg.markerPos ? '📌' + (i+1) + '. ' : ''}Anomalia: ${reg.elemento}`; 
+            const notas = [reg.classEstrutural, reg.classFuncional, reg.classDurabilidade].filter(Boolean);
+            const notaMin = notas.length > 0 ? Math.min(...notas) : 'N/A';
+            const detalhes = isFotoGeral ? `<small>Descrição: ${reg.observacao || 'Sem descrição'}</small><br>` : `<small>Tipo: ${reg.tipo}</small><br><small><b>Nota: ${notaMin}</b> (E:${reg.classEstrutural||'-'}/F:${reg.classFuncional||'-'}/D:${reg.classDurabilidade||'-'})</small>`; 
+            return `<div class="${itemClass}"><div style="display:flex; justify-content:space-between; align-items:center;"><div><b>${titulo}</b><br>${detalhes}<br><small>Fotos (${reg.tipo_foto}): ${reg.fotoInicial} a ${parseInt(reg.fotoInicial) + parseInt(reg.qtdFotos) - 1}</small></div><div class="botoes-acao"><button type="button" onclick="editarRegistro(${i})" class="btn" style="background:#f39c12; color:white; padding:5px 10px; font-size:12px;">✏️</button><button type="button" onclick="removerRegistro(${i})" class="btn btn-secondary" style="padding:5px 10px; font-size:12px;">X</button></div></div></div>`; 
+        }).join('');
+        desenharMarcadores();
+    }
+
+    function removerRegistro(index) { if (confirm('Remover este registro?')) { inspecaoEmAndamento.registros.splice(index, 1); atualizarListaRegistros(inspecaoEmAndamento.registros); } }
+
+    function editarRegistro(index) {
+        idxRegistroEdicao = index;
+        const registro = inspecaoEmAndamento.registros[index];
+        if (!registro) return;
+        abrirFormRegistro();
+        document.getElementById('btnSalvarRegistro').textContent = 'Atualizar Registro';
+        
+        document.getElementById('elementoRegistro').value = registro.elemento;
+        atualizarAnomaliasPorElemento(); // Popula as anomalias
+        
+        if (Array.from(document.getElementById('tipoAnomalia').options).some(opt => opt.value === registro.tipo)) {
+            document.getElementById('tipoAnomalia').value = registro.tipo;
+        } else {
+            document.getElementById('tipoAnomalia').value = 'Outro';
+            document.getElementById('tipoAnomaliaOutro').value = registro.tipo;
+        }
+        handleTipoAnomaliaChange(document.getElementById('tipoAnomalia'));
+        
+        document.getElementById('observacao').value = registro.observacao;
+        document.getElementById('tipo_foto').value = registro.tipo_foto;
+        document.getElementById('qtdFotos').value = registro.qtdFotos;
+        if(registro.tipo_foto === 'camera') { document.getElementById('fotoInicialCamera').value = registro.fotoInicial; } else { document.getElementById('fotoInicialDrone').value = registro.fotoInicial; }
+        document.getElementById('classEstrutural').value = registro.classEstrutural;
+        document.getElementById('classFuncional').value = registro.classFuncional;
+        document.getElementById('classDurabilidade').value = registro.classDurabilidade;
+        updatePhotoInfo();
+    }
+    
+    function salvarInspecao() {
+        inspecaoEmAndamento.estrutura = document.getElementById('estrutura').value.trim();
+        inspecaoEmAndamento.inspetor = document.getElementById('inspetor').value.trim();
+        inspecaoEmAndamento.data = document.getElementById('data').value;
+        inspecaoEmAndamento.tipoCroqui = document.getElementById('tipoCroqui').value;
+        inspecaoEmAndamento.croquiUrl = croquis[inspecaoEmAndamento.tipoCroqui] || '';
+        
+        // Salvar campos do Excel
+        inspecaoEmAndamento.localizacaoInicial = document.getElementById('localizacaoInicial').value;
+        inspecaoEmAndamento.localizacaoFinal = document.getElementById('localizacaoFinal').value;
+        inspecaoEmAndamento.pista = document.getElementById('pista').value;
+        inspecaoEmAndamento.lado = document.getElementById('lado').value;
+        inspecaoEmAndamento.latitude = document.getElementById('latitude').value;
+        inspecaoEmAndamento.longitude = document.getElementById('longitude').value;
+        inspecaoEmAndamento.largura = document.getElementById('largura').value;
+        inspecaoEmAndamento.altura = document.getElementById('altura').value;
+        inspecaoEmAndamento.observacoesEstrutura = document.getElementById('observacoesEstrutura').value;
+        
+        if (!inspecaoEmAndamento.estrutura || !inspecaoEmAndamento.inspetor || !inspecaoEmAndamento.data) { alert("Preencha os campos Estrutura, Inspetor e Data."); return; }
+        
+        const todasAsNotas = inspecaoEmAndamento.registros.flatMap(r => [r.classEstrutural, r.classFuncional, r.classDurabilidade]).filter(n => n && n !== '').map(Number);
+        const notaFinal = todasAsNotas.length > 0 ? Math.min(...todasAsNotas) : 5;
+        
+        inspecaoEmAndamento.notaFinal = notaFinal;
+        inspecaoEmAndamento.classificacao = caracterizacaoNorma[notaFinal]?.condicao || 'Não classificado';
+
+        if (idxInspecaoEdicao !== null) { inspecoes[idxInspecaoEdicao] = inspecaoEmAndamento; } 
+        else { inspecoes.push(inspecaoEmAndamento); }
+        
+        localStorage.setItem('inspecoes_ponte_metalicas_v11', JSON.stringify(inspecoes));
+        alert('Inspeção salva com sucesso!');
+        cancelarEdicao();
+        atualizarListaInspecoes();
+    }
+    
+    function atualizarListaInspecoes() {
+        const container = document.getElementById('listaInspecoes');
+        const termoBusca = document.getElementById('buscaInspecao').value.toLowerCase();
+        const inspecoesComIndices = inspecoes.map((ins, idx) => ({ ...ins, originalIndex: idx })).sort((a,b) => new Date(b.data) - new Date(a.data));
+        inspecoesVisiveis = termoBusca ? inspecoesComIndices.filter(ins => (ins.estrutura || '').toLowerCase().includes(termoBusca) || (ins.inspetor || '').toLowerCase().includes(termoBusca)) : inspecoesComIndices;
+        
+        document.getElementById('botoesBusca').classList.toggle('hidden', !termoBusca || inspecoesVisiveis.length === 0);
+        
+        if (inspecoesVisiveis.length === 0) { container.innerHTML = '<p style="text-align:center; color:#6c757d; padding: 20px;">Nenhuma inspeção encontrada.</p>'; return; }
+        container.innerHTML = inspecoesVisiveis.map(ins => `<div class="inspecao-card"><div class="inspecao-card-header"><h4>${ins.estrutura}</h4><div class="botoes-acao"><button type="button" class="btn" style="background:#f39c12; color:white;" onclick="editarInspecao(${ins.originalIndex})">✏️</button><button type="button" class="btn btn-secondary" onclick="excluirInspecao(${ins.originalIndex})">🗑️</button></div></div><div class="inspecao-card-body"><p><strong>Inspetor:</strong> ${ins.inspetor||'N/A'}</p><p><strong>Data:</strong> ${ins.data ? new Date(ins.data).toLocaleString('pt-BR') : 'N/A'}</p><p><strong>Classificação:</strong> ${ins.classificacao||'N/A'} (Nota: ${ins.notaFinal})</p><p><strong>Registros:</strong> ${ins.registros.length}</p><div style="text-align:right; margin-top:10px;"><button type="button" class="btn-export btn-excel" onclick="exportarExcelFormatado([inspecoes[${ins.originalIndex}]])">Excel</button><button type="button" class="btn-export btn-pdf" onclick="exportarPDF([inspecoes[${ins.originalIndex}]])">PDF</button></div></div></div>`).join('');
+    }
+
+    function editarInspecao(idx) {
+        const ins = inspecoes[idx]; if (!ins) return;
+        limparFormularioGeral(); idxInspecaoEdicao = idx;
+        inspecaoEmAndamento = JSON.parse(JSON.stringify(ins));
+        
+        // Preencher campos básicos
+        document.getElementById('estrutura').value = ins.estrutura; 
+        document.getElementById('inspetor').value = ins.inspetor; 
+        document.getElementById('data').value = ins.data;
+        
+        // Preencher campos do Excel se disponíveis
+        if (ins.localizacaoInicial) document.getElementById('localizacaoInicial').value = ins.localizacaoInicial;
+        if (ins.localizacaoFinal) document.getElementById('localizacaoFinal').value = ins.localizacaoFinal;
+        if (ins.pista) document.getElementById('pista').value = ins.pista;
+        if (ins.lado) document.getElementById('lado').value = ins.lado;
+        if (ins.latitude) document.getElementById('latitude').value = ins.latitude;
+        if (ins.longitude) document.getElementById('longitude').value = ins.longitude;
+        if (ins.largura) document.getElementById('largura').value = ins.largura;
+        if (ins.altura) document.getElementById('altura').value = ins.altura;
+        if (ins.observacoesEstrutura) document.getElementById('observacoesEstrutura').value = ins.observacoesEstrutura;
+        
+        selecionarCroqui(ins.tipoCroqui);
+        atualizarListaRegistros(inspecaoEmAndamento.registros);
+        document.getElementById('formTab').textContent = `📝 Editando: ${ins.estrutura}`;
+        document.getElementById('btnSalvarInspecao').textContent = 'Atualizar Inspeção';
+        document.getElementById('formTab').disabled = false;
+        showTab('formTabContent');
+    }
+
+    function excluirInspecao(idx) { if (confirm('Deseja realmente excluir esta inspeção?')) { inspecoes.splice(idx, 1); localStorage.setItem('inspecoes_ponte_metalicas_v11', JSON.stringify(inspecoes)); atualizarListaInspecoes(); } }
+    
+    // --- FUNÇÕES DE ANÁLISE E GRÁFICOS ---
+    
+    function analisarDadosInspecoes(dados) {
+        const pioresNotas = [];
+        const aspectos = { Estrutural: [], Funcional: [], Durabilidade: [] };
+        const classificacoes = {};
+        const datas = [];
+        
+        dados.forEach(inspecao => {
+            // Calcular a pior nota da inspeção (menor nota entre todos os registros)
+            let piorNota = 5; // Inicializa com a melhor nota possível
+            let temRegistros = false;
+            
+            if (inspecao.registros && inspecao.registros.length > 0) {
+                inspecao.registros.forEach(registro => {
+                    const notas = [registro.classEstrutural, registro.classFuncional, registro.classDurabilidade]
+                        .filter(n => n && n !== '' && n !== '0')
+                        .map(Number);
+                    
+                    if (notas.length > 0) {
+                        const menorNota = Math.min(...notas);
+                        if (menorNota < piorNota) {
+                            piorNota = menorNota;
+                        }
+                        temRegistros = true;
+                    }
+                    
+                    // Coletar dados para análise por aspecto
+                    if (registro.classEstrutural) aspectos.Estrutural.push(parseInt(registro.classEstrutural));
+                    if (registro.classFuncional) aspectos.Funcional.push(parseInt(registro.classFuncional));
+                    if (registro.classDurabilidade) aspectos.Durabilidade.push(parseInt(registro.classDurabilidade));
+                });
+            }
+            
+            if (temRegistros) {
+                pioresNotas.push(piorNota);
+                const classificacao = caracterizacaoNorma[piorNota]?.condicao || 'Não classificado';
+                classificacoes[classificacao] = (classificacoes[classificacao] || 0) + 1;
+            }
+            
+            if (inspecao.data) {
+                datas.push(new Date(inspecao.data));
+            }
+        });
+        
+        // Calcular médias por aspecto
+        const analiseAspectos = Object.keys(aspectos).map(aspecto => {
+            const notas = aspectos[aspecto];
+            return {
+                aspecto: aspecto,
+                media: notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : 0,
+                quantidade: notas.length
+            };
+        });
+        
+        // Distribuição das piores notas
+        const distribuicaoNotas = {};
+        pioresNotas.forEach(nota => {
+            distribuicaoNotas[nota] = (distribuicaoNotas[nota] || 0) + 1;
+        });
+        
+        // Classificação predominante baseada nas piores notas
+        let classificacaoPredominante = 'Não classificado';
+        let maxCount = 0;
+        Object.keys(classificacoes).forEach(classificacao => {
+            if (classificacoes[classificacao] > maxCount) {
+                maxCount = classificacoes[classificacao];
+                classificacaoPredominante = classificacao;
+            }
+        });
+        
+        // Período
+        let periodo = 'Período não definido';
+        if (datas.length > 0) {
+            const dataInicial = new Date(Math.min(...datas));
+            const dataFinal = new Date(Math.max(...datas));
+            periodo = `${dataInicial.toLocaleDateString('pt-BR')} a ${dataFinal.toLocaleDateString('pt-BR')}`;
+        }
+        
+        return {
+            mediaNota: pioresNotas.length > 0 ? pioresNotas.reduce((a, b) => a + b, 0) / pioresNotas.length : 0,
+            analiseAspectos: analiseAspectos,
+            distribuicaoNotas: Object.keys(distribuicaoNotas).map(nota => ({
+                nota: parseInt(nota),
+                quantidade: distribuicaoNotas[nota]
+            })).sort((a, b) => a.nota - b.nota),
+            classificacaoPredominante: classificacaoPredominante,
+            periodo: periodo,
+            totalInspecoes: dados.length,
+            pioresNotas: pioresNotas
+        };
+    }
+    
+
+    
+    // --- EXPORTAÇÕES ---
+    function exportarExcelFormatado(dados = inspecoes) {
+        try {
+            if (dados.length === 0) { 
+                alert("Nenhum dado para exportar."); 
+                return; 
+            }
+            
+            const wb = XLSX.utils.book_new();
+            
+            // Análise estatística
+            const estatisticas = analisarDadosInspecoes(dados);
+            
+            // Planilha 1: Dados Detalhados
+            const wsData = [];
+            
+            // Cabeçalho
+            wsData.push([
+                'ID da Estrutura', 'Localização Inicial', 'Localização Final', 'Pista', 'Lado', 'Latitude', 'Longitude', 'Largura (m)', 'Altura (m)', 'Observações',
+                'Inspetor', 'Data', 'Nota Final', 'Classificação',
+                'Elemento', 'Anomalia', 'Observações', 'Nota Estrutural', 'Nota Funcional', 'Nota Durabilidade',
+                'Fotos (Tipo)', 'Fotos (Inicial)', 'Fotos (Quantidade)', 'Tipo Croqui'
+            ]);
+            
+            // Dados
+            dados.forEach(inspecao => {
+                if (inspecao.registros && inspecao.registros.length > 0) {
+                    inspecao.registros.forEach(registro => {
+                        wsData.push([
+                            inspecao.estrutura,
+                            inspecao.localizacaoInicial || '',
+                            inspecao.localizacaoFinal || '',
+                            inspecao.pista || '',
+                            inspecao.lado || '',
+                            inspecao.latitude || '',
+                            inspecao.longitude || '',
+                            inspecao.largura || '',
+                            inspecao.altura || '',
+                            inspecao.observacoesEstrutura || '',
+                            inspecao.inspetor,
+                            inspecao.data ? new Date(inspecao.data).toLocaleString('pt-BR') : '',
+                            inspecao.notaFinal || '',
+                            inspecao.classificacao || '',
+                            registro.elemento,
+                            registro.tipo,
+                            registro.observacao,
+                            registro.classEstrutural || '',
+                            registro.classFuncional || '',
+                            registro.classDurabilidade || '',
+                            registro.tipo_foto,
+                            registro.fotoInicial,
+                            registro.qtdFotos,
+                            inspecao.tipoCroqui || ''
+                        ]);
+                    });
+                } else {
+                    // Se não há registros, ainda exporta os dados básicos
+                    wsData.push([
+                        inspecao.estrutura,
+                        inspecao.localizacaoInicial || '',
+                        inspecao.localizacaoFinal || '',
+                        inspecao.pista || '',
+                        inspecao.lado || '',
+                        inspecao.latitude || '',
+                        inspecao.longitude || '',
+                        inspecao.largura || '',
+                        inspecao.altura || '',
+                        inspecao.observacoesEstrutura || '',
+                        inspecao.inspetor,
+                        inspecao.data ? new Date(inspecao.data).toLocaleString('pt-BR') : '',
+                        inspecao.notaFinal || '',
+                        inspecao.classificacao || '',
+                        '', '', '', '', '', '', '', '', '',
+                        inspecao.tipoCroqui || ''
+                    ]);
+                }
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 15 }, // ID da Estrutura
+                { wch: 18 }, // Localização Inicial
+                { wch: 18 }, // Localização Final
+                { wch: 10 }, // Pista
+                { wch: 10 }, // Lado
+                { wch: 12 }, // Latitude
+                { wch: 12 }, // Longitude
+                { wch: 12 }, // Largura (m)
+                { wch: 12 }, // Altura (m)
+                { wch: 30 }, // Observações
+                { wch: 15 }, // Inspetor
+                { wch: 20 }, // Data
+                { wch: 10 }, // Nota Final
+                { wch: 15 }, // Classificação
+                { wch: 25 }, // Elemento
+                { wch: 30 }, // Anomalia
+                { wch: 40 }, // Observações
+                { wch: 15 }, // Nota Estrutural
+                { wch: 15 }, // Nota Funcional
+                { wch: 15 }, // Nota Durabilidade
+                { wch: 10 }, // Fotos (Tipo)
+                { wch: 15 }, // Fotos (Inicial)
+                { wch: 15 }, // Fotos (Quantidade)
+                { wch: 15 }  // Tipo Croqui
+            ];
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Dados Detalhados');
+            
+            // Planilha 2: Resumo Estatístico
+            const wsResumo = [];
+            wsResumo.push(['RELATÓRIO DE INSPEÇÕES - ESTRUTURAS METÁLICAS AUXILIARES']);
+            wsResumo.push(['Ecovias Ponte - Conforme ABNT NBR 9452:2023']);
+            wsResumo.push(['Inspeção Predial - Avaliação de Patologia']);
+            wsResumo.push([]);
+            wsResumo.push(['RESUMO ESTATÍSTICO']);
+            wsResumo.push([]);
+            wsResumo.push(['Período', estatisticas.periodo]);
+            wsResumo.push(['Total de Inspeções', estatisticas.totalInspecoes]);
+            wsResumo.push(['Média das Piores Notas', estatisticas.mediaNota.toFixed(2)]);
+            wsResumo.push(['Classificação Predominante', estatisticas.classificacaoPredominante]);
+            wsResumo.push([]);
+            wsResumo.push(['ANÁLISE POR ASPECTO']);
+            wsResumo.push(['Aspecto', 'Média', 'Quantidade de Registros']);
+            estatisticas.analiseAspectos.forEach(aspecto => {
+                wsResumo.push([aspecto.aspecto, aspecto.media.toFixed(2), aspecto.quantidade]);
+            });
+            wsResumo.push([]);
+            wsResumo.push(['DISTRIBUIÇÃO DAS PIORES NOTAS POR INSPEÇÃO']);
+            wsResumo.push(['Nota', 'Quantidade de Inspeções', 'Classificação']);
+            estatisticas.distribuicaoNotas.forEach(dist => {
+                const classificacao = caracterizacaoNorma[dist.nota]?.condicao || 'Não classificado';
+                wsResumo.push([dist.nota, dist.quantidade, classificacao]);
+            });
+            
+            const wsResumoSheet = XLSX.utils.aoa_to_sheet(wsResumo);
+            wsResumoSheet['!cols'] = [
+                { wch: 25 }, // Aspecto/Nota
+                { wch: 15 }, // Média/Quantidade
+                { wch: 20 }  // Quantidade/Classificação
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, wsResumoSheet, 'Resumo Estatístico');
+            
+            // Planilha 3: Conclusões
+            const wsConclusoes = [];
+            wsConclusoes.push(['CONCLUSÕES E RECOMENDAÇÕES']);
+            wsConclusoes.push([]);
+            
+            // Análise geral conforme NBR 9452:2023
+            wsConclusoes.push(['ANÁLISE GERAL - BASEADA NAS PIORES NOTAS (NBR 9452:2023)']);
+            if (estatisticas.mediaNota >= 4.5) {
+                wsConclusoes.push(['• Classificação: BOA/EXCELENTE - Estruturas em condições satisfatórias.']);
+                wsConclusoes.push(['• Recomendação: Manutenção preventiva para preservar o estado atual.']);
+                wsConclusoes.push(['• Ação: Monitoramento contínuo das condições estruturais.']);
+            } else if (estatisticas.mediaNota >= 3.5) {
+                wsConclusoes.push(['• Classificação: REGULAR - Estruturas com condições aceitáveis.']);
+                wsConclusoes.push(['• Recomendação: Intervenções pontuais em elementos específicos.']);
+                wsConclusoes.push(['• Ação: Planejamento de manutenção corretiva.']);
+            } else if (estatisticas.mediaNota >= 2.5) {
+                wsConclusoes.push(['• Classificação: RUIM - Estruturas com comprometimento estrutural.']);
+                wsConclusoes.push(['• Recomendação: Intervenções corretivas imediatas.']);
+                wsConclusoes.push(['• Ação: Priorização de ações de recuperação estrutural.']);
+            } else if (estatisticas.mediaNota >= 1.5) {
+                wsConclusoes.push(['• Classificação: CRÍTICA - Estruturas com grave insuficiência.']);
+                wsConclusoes.push(['• Recomendação: Intervenção urgente necessária.']);
+                wsConclusoes.push(['• Ação: Intervenção imediata para garantir segurança.']);
+            } else {
+                wsConclusoes.push(['• Classificação: EMERGENCIAL - Estruturas com risco de colapso.']);
+                wsConclusoes.push(['• Recomendação: Intervenção imediata obrigatória.']);
+                wsConclusoes.push(['• Ação: Evacuação e intervenção emergencial.']);
+            }
+            
+            wsConclusoes.push([]);
+            wsConclusoes.push(['RECOMENDAÇÕES ESPECÍFICAS - NBR 9452:2023']);
+            estatisticas.analiseAspectos.forEach(aspecto => {
+                if (aspecto.media < 3.0) {
+                    const classificacao = aspecto.media < 2.0 ? "CRÍTICA" : aspecto.media < 2.5 ? "RUIM" : "REGULAR";
+                    wsConclusoes.push([`• ${aspecto.aspecto}: Classificação ${classificacao} (média: ${aspecto.media.toFixed(1)})`]);
+                    wsConclusoes.push([`  - Intervenção necessária conforme NBR 9452:2023`]);
+                }
+            });
+            
+            wsConclusoes.push([]);
+            wsConclusoes.push(['PRÓXIMOS PASSOS - CONFORME NBR 9452:2023']);
+            wsConclusoes.push(['• Elaboração de laudo técnico detalhado das estruturas críticas.']);
+            wsConclusoes.push(['• Definição de cronograma de intervenções por prioridade.']);
+            wsConclusoes.push(['• Estabelecimento de programa de monitoramento contínuo.']);
+            wsConclusoes.push(['• Documentação fotográfica e relatórios de acompanhamento.']);
+            
+            const wsConclusoesSheet = XLSX.utils.aoa_to_sheet(wsConclusoes);
+            wsConclusoesSheet['!cols'] = [{ wch: 80 }];
+            
+            XLSX.utils.book_append_sheet(wb, wsConclusoesSheet, 'Conclusões');
+            
+            // Salvar arquivo
+            const fileName = `Relatorio_Completo_Inspecoes_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            alert('Relatório Excel gerado com sucesso!');
+            
+        } catch (error) {
+            console.error('Erro ao gerar Excel:', error);
+            alert('Erro ao gerar Excel. Verifique o console para mais detalhes.');
+        }
+    }
+    async function exportarPDF(dados = inspecoes) {
+        if (dados.length === 0) { alert("Nenhum dado para gerar PDF."); return; }
+        
+        try {
+            // Gerar PNGs dos croquis antes de criar o PDF
+            const croquiPNGs = {};
+            for (const ins of dados) {
+                if (ins.croquiUrl && ins.tipoCroqui) {
+                    try {
+                        console.log('Gerando PNG para:', ins.tipoCroqui);
+                        croquiPNGs[ins.id] = await gerarPNGCroqui(ins.croquiUrl, ins.registros);
+                    } catch (error) {
+                        console.error('Erro ao gerar PNG para', ins.tipoCroqui, ':', error);
+                        croquiPNGs[ins.id] = null;
+                    }
+                }
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            // Análise estatística dos dados
+            const estatisticas = analisarDadosInspecoes(dados);
+            
+            // Página 1: Capa
+            doc.setFontSize(24);
+            doc.text('RELATÓRIO DE INSPEÇÕES', 14, 40);
+            doc.setFontSize(18);
+            doc.text('ESTRUTURAS METÁLICAS AUXILIARES', 14, 55);
+            doc.setFontSize(14);
+            doc.text('Ecovias Ponte - Conforme ABNT NBR 9452:2023', 14, 70);
+            doc.text('Inspeção Predial - Avaliação de Patologia', 14, 85);
+            
+            doc.setFontSize(12);
+            doc.text(`Data do Relatório: ${new Date().toLocaleDateString('pt-BR')}`, 14, 100);
+            doc.text(`Período Analisado: ${estatisticas.periodo}`, 14, 110);
+            doc.text(`Total de Inspeções: ${dados.length}`, 14, 120);
+            doc.text(`Média das Piores Notas: ${estatisticas.mediaNota.toFixed(2)}`, 14, 130);
+            doc.text(`Classificação Predominante: ${estatisticas.classificacaoPredominante}`, 14, 140);
+            
+            // Página 2: Resumo Executivo
+            doc.addPage();
+            doc.setFontSize(18);
+            doc.text('RESUMO EXECUTIVO', 14, 20);
+            
+            doc.setFontSize(12);
+            doc.text('1. INFORMAÇÕES GERAIS', 14, 35);
+            doc.setFontSize(10);
+            doc.text(`• Período de análise: ${estatisticas.periodo}`, 20, 45);
+            doc.text(`• Total de estruturas inspecionadas: ${dados.length}`, 20, 52);
+            doc.text(`• Média das piores notas: ${estatisticas.mediaNota.toFixed(2)}`, 20, 59);
+            doc.text(`• Classificação predominante: ${estatisticas.classificacaoPredominante}`, 20, 66);
+            
+            doc.setFontSize(12);
+            doc.text('2. DISTRIBUIÇÃO DAS PIORES NOTAS POR INSPEÇÃO', 14, 80);
+            doc.setFontSize(10);
+            if (estatisticas.distribuicaoNotas.length > 0) {
+                let y = 90;
+                estatisticas.distribuicaoNotas.forEach(dist => {
+                    const classificacao = caracterizacaoNorma[dist.nota]?.condicao || 'Não classificado';
+                    doc.text(`• Nota ${dist.nota} (${classificacao}): ${dist.quantidade} inspeções`, 20, y);
+                    y += 7;
+                });
+            }
+            
+            doc.setFontSize(12);
+            doc.text('3. ANÁLISE POR ASPECTO', 14, 140);
+            doc.setFontSize(10);
+            if (estatisticas.analiseAspectos.length > 0) {
+                let y = 150;
+                estatisticas.analiseAspectos.forEach(aspecto => {
+                    doc.text(`• ${aspecto.aspecto}: ${aspecto.media.toFixed(2)} (${aspecto.quantidade} registros)`, 20, y);
+                    y += 7;
+                });
+            }
+            
+            // Página 3: Conclusões e Recomendações
+            doc.addPage();
+            doc.setFontSize(18);
+            doc.text('CONCLUSÕES E RECOMENDAÇÕES', 14, 20);
+            
+            doc.setFontSize(12);
+            doc.text('1. ANÁLISE GERAL - BASEADA NAS PIORES NOTAS', 14, 35);
+            doc.setFontSize(10);
+            
+            let y = 45;
+            if (estatisticas.mediaNota >= 4.5) {
+                doc.text('• Classificação: BOA/EXCELENTE - Estruturas em condições satisfatórias.', 20, y);
+                y += 7;
+                doc.text('• Recomendação: Manutenção preventiva para preservar o estado atual.', 20, y);
+                y += 7;
+                doc.text('• Ação: Monitoramento contínuo das condições estruturais.', 20, y);
+            } else if (estatisticas.mediaNota >= 3.5) {
+                doc.text('• Classificação: REGULAR - Estruturas com condições aceitáveis.', 20, y);
+                y += 7;
+                doc.text('• Recomendação: Intervenções pontuais em elementos específicos.', 20, y);
+                y += 7;
+                doc.text('• Ação: Planejamento de manutenção corretiva.', 20, y);
+            } else if (estatisticas.mediaNota >= 2.5) {
+                doc.text('• Classificação: RUIM - Estruturas com comprometimento estrutural.', 20, y);
+                y += 7;
+                doc.text('• Recomendação: Intervenções corretivas imediatas.', 20, y);
+                y += 7;
+                doc.text('• Ação: Priorização de ações de recuperação estrutural.', 20, y);
+            } else if (estatisticas.mediaNota >= 1.5) {
+                doc.text('• Classificação: CRÍTICA - Estruturas com grave insuficiência.', 20, y);
+                y += 7;
+                doc.text('• Recomendação: Intervenção urgente necessária.', 20, y);
+                y += 7;
+                doc.text('• Ação: Intervenção imediata para garantir segurança.', 20, y);
+            } else {
+                doc.text('• Classificação: EMERGENCIAL - Estruturas com risco de colapso.', 20, y);
+                y += 7;
+                doc.text('• Recomendação: Intervenção imediata obrigatória.', 20, y);
+                y += 7;
+                doc.text('• Ação: Evacuação e intervenção emergencial.', 20, y);
+            }
+            
+            y += 15;
+            doc.setFontSize(12);
+            doc.text('2. RECOMENDAÇÕES ESPECÍFICAS', 14, y);
+            y += 10;
+            doc.setFontSize(10);
+            
+            estatisticas.analiseAspectos.forEach(aspecto => {
+                if (aspecto.media < 3.0) {
+                    const classificacao = aspecto.media < 2.0 ? "CRÍTICA" : aspecto.media < 2.5 ? "RUIM" : "REGULAR";
+                    doc.text(`• ${aspecto.aspecto}: Classificação ${classificacao} (média: ${aspecto.media.toFixed(1)})`, 20, y);
+                    y += 7;
+                    doc.text(`  - Intervenção necessária conforme NBR 9452:2023`, 25, y);
+                    y += 5;
+                }
+            });
+            
+            y += 10;
+            doc.setFontSize(12);
+            doc.text('3. PRÓXIMOS PASSOS - CONFORME NBR 9452:2023', 14, y);
+            y += 10;
+            doc.setFontSize(10);
+            doc.text('• Elaboração de laudo técnico detalhado das estruturas críticas.', 20, y);
+            y += 7;
+            doc.text('• Definição de cronograma de intervenções por prioridade.', 20, y);
+            y += 7;
+            doc.text('• Estabelecimento de programa de monitoramento contínuo.', 20, y);
+            y += 7;
+            doc.text('• Documentação fotográfica e relatórios de acompanhamento.', 20, y);
+            
+            // Páginas seguintes: Detalhes das inspeções
+            for (const [index, ins] of dados.entries()) {
+                doc.addPage();
+                let y = 20;
+                
+                // Cabeçalho da inspeção
+                doc.setFontSize(16); 
+                doc.text(`FICHA DE INSPEÇÃO - ${ins.estrutura}`, 14, y); 
+                y += 8;
+                doc.setFontSize(10);
+                doc.text('Conforme ABNT NBR 9452:2023 - Inspeção Predial', 14, y);
+                y += 15;
+                
+                doc.setFontSize(12);
+                doc.text(`Localização Inicial: ${ins.localizacaoInicial || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Localização Final: ${ins.localizacaoFinal || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Pista: ${ins.pista || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Lado: ${ins.lado || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Latitude: ${ins.latitude || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Longitude: ${ins.longitude || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Largura: ${ins.largura || 'N/A'} m`, 14, y); 
+                y += 8;
+                doc.text(`Altura: ${ins.altura || 'N/A'} m`, 14, y); 
+                y += 8;
+                if (ins.observacoesEstrutura) {
+                    doc.text(`Observações da Estrutura: ${ins.observacoesEstrutura}`, 14, y); 
+                    y += 8;
+                }
+                doc.text(`Inspetor: ${ins.inspetor || 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Data: ${ins.data ? new Date(ins.data).toLocaleString('pt-BR') : 'N/A'}`, 14, y); 
+                y += 8;
+                doc.text(`Classificação: ${ins.classificacao || 'N/A'} (Nota: ${ins.notaFinal || 'N/A'})`, 14, y); 
+                y += 8;
+                doc.text(`Tipo de Croqui: ${ins.tipoCroqui || 'N/A'}`, 14, y);
+                y += 15;
+                
+                // Adicionar croqui com PNG gerado
+                if (ins.croquiUrl && ins.tipoCroqui) {
+                    doc.setFontSize(12);
+                    doc.text(`Croqui: ${ins.tipoCroqui}`, 14, y);
+                    y += 8;
+                    
+                    // Adicionar PNG do croqui se foi gerado com sucesso
+                    if (croquiPNGs[ins.id]) {
+                        try {
+                            doc.addImage(croquiPNGs[ins.id], 'PNG', 14, y, 180, 135);
+                            y += 145;
+                            console.log('PNG do croqui adicionado ao PDF');
+                        } catch (error) {
+                            console.error('Erro ao adicionar PNG ao PDF:', error);
+                            y += 10;
+                        }
+                    }
+                    
+                    // Adicionar informações dos marcadores
+                    if (ins.registros && ins.registros.length > 0) {
+                        doc.setFontSize(10);
+                        doc.text('Marcadores no croqui:', 20, y);
+                        y += 6;
+                        ins.registros.forEach((reg, i) => {
+                            if (reg.markerPos) {
+                                doc.text(`• Ponto ${i + 1}: ${reg.elemento} - ${reg.tipo || 'Anomalia'}`, 25, y);
+                                y += 5;
+                            }
+                        });
+                        y += 5;
+                    }
+                } else {
+                    doc.text('Croqui não selecionado', 14, y);
+                    y += 10;
+                }
+                
+
+                
+                // Lista de registros
+                if (ins.registros && ins.registros.length > 0) {
+                    doc.setFontSize(14);
+                    doc.text('REGISTROS DE PATOLOGIAS (NBR 9452:2023):', 14, y);
+                    y += 10;
+                    
+                    doc.setFontSize(10);
+                    ins.registros.forEach((reg, i) => {
+                        const isFotoGeral = reg.elemento === 'Foto Geral da Estrutura';
+                        const titulo = isFotoGeral ? `Registro ${i+1}: Foto Geral` : `Registro ${i+1}: ${reg.elemento}`;
+                        
+                        doc.setFontSize(11);
+                        doc.text(titulo, 14, y);
+                        y += 6;
+                        
+                        doc.setFontSize(9);
+                        if (!isFotoGeral && reg.tipo) {
+                            doc.text(`Tipo de Anomalia: ${reg.tipo}`, 20, y);
+                            y += 5;
+                        }
+                        
+                        if (reg.observacao) {
+                            doc.text(`Observações: ${reg.observacao}`, 20, y);
+                            y += 5;
+                        }
+                        
+                        const notas = [reg.classEstrutural, reg.classFuncional, reg.classDurabilidade].filter(Boolean);
+                        if (notas.length > 0) {
+                            const notaMin = Math.min(...notas);
+                            const classificacao = caracterizacaoNorma[notaMin]?.condicao || 'Não classificado';
+                            const acao = classificacoesNBR9452[notaMin] || 'Ação não definida';
+                            doc.text(`Classificação NBR 9452: ${notaMin} (${classificacao})`, 20, y);
+                            y += 5;
+                            doc.text(`Ação Recomendada: ${acao}`, 20, y);
+                            y += 5;
+                            doc.text(`  - Aspecto Estrutural: ${reg.classEstrutural || '-'}`, 25, y);
+                            y += 4;
+                            doc.text(`  - Aspecto Funcional: ${reg.classFuncional || '-'}`, 25, y);
+                            y += 4;
+                            doc.text(`  - Aspecto Durabilidade: ${reg.classDurabilidade || '-'}`, 25, y);
+                            y += 5;
+                        }
+                        
+                        doc.text(`Fotos (${reg.tipo_foto}): ${reg.fotoInicial} a ${parseInt(reg.fotoInicial) + parseInt(reg.qtdFotos) - 1}`, 20, y);
+                        y += 10;
+                        
+                        // Quebra de página se necessário
+                        if (y > 250) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                    });
+                } else {
+                    doc.setFontSize(12);
+                    doc.text('Nenhum registro encontrado.', 14, y);
+                }
+            }
+            
+            doc.save(`Relatorio_Completo_Inspecoes_${new Date().toISOString().slice(0,10)}.pdf`);
+            
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error);
+            alert('Erro ao gerar PDF. Verifique o console para mais detalhes.');
+        }
+    }
+
+
+    // --- LÓGICA DO CROQUI ---
+
+    // Função para gerar PNG do croqui com marcadores
+    async function gerarPNGCroqui(croquiUrl, registros) {
+        return new Promise((resolve, reject) => {
+            try {
+                console.log('Iniciando geração de PNG...');
+                console.log('URL do croqui:', croquiUrl);
+                console.log('Registros:', registros);
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                // Fundo branco primeiro
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = function() {
+                    try {
+                        console.log('Imagem carregada com sucesso');
+                        console.log('Dimensões da imagem:', img.width, 'x', img.height);
+                        
+                        // Calcular proporções
+                        const imgAspect = img.width / img.height;
+                        const canvasAspect = canvas.width / canvas.height;
+                        
+                        let drawWidth, drawHeight, offsetX, offsetY;
+                        
+                        if (imgAspect > canvasAspect) {
+                            drawWidth = canvas.width * 0.9;
+                            drawHeight = drawWidth / imgAspect;
+                            offsetX = (canvas.width - drawWidth) / 2;
+                            offsetY = (canvas.height - drawHeight) / 2;
+                        } else {
+                            drawHeight = canvas.height * 0.9;
+                            drawWidth = drawHeight * imgAspect;
+                            offsetX = (canvas.width - drawWidth) / 2;
+                            offsetY = (canvas.height - drawHeight) / 2;
+                        }
+                        
+                        console.log('Dimensões de desenho:', drawWidth, 'x', drawHeight);
+                        console.log('Offset:', offsetX, offsetY);
+                        
+                        // Desenhar imagem
+                        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                        console.log('Imagem desenhada no canvas');
+                        
+                        // Adicionar marcadores
+                        if (registros && registros.length > 0) {
+                            console.log('Adicionando', registros.length, 'marcadores');
+                            registros.forEach((reg, i) => {
+                                if (reg.markerPos) {
+                                    const markerX = offsetX + (reg.markerPos.x / 100) * drawWidth;
+                                    const markerY = offsetY + (reg.markerPos.y / 100) * drawHeight;
+                                    
+                                    console.log(`Marcador ${i + 1}: posição ${reg.markerPos.x}%, ${reg.markerPos.y}% -> pixel ${markerX.toFixed(1)}, ${markerY.toFixed(1)}`);
+                                    
+                                    // Círculo do marcador
+                                    ctx.fillStyle = '#e74c3c';
+                                    ctx.beginPath();
+                                    ctx.arc(markerX, markerY, 15, 0, 2 * Math.PI);
+                                    ctx.fill();
+                                    
+                                    // Borda branca
+                                    ctx.strokeStyle = 'white';
+                                    ctx.lineWidth = 3;
+                                    ctx.stroke();
+                                    
+                                    // Número
+                                    ctx.fillStyle = 'white';
+                                    ctx.font = 'bold 14px Arial';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillText((i + 1).toString(), markerX, markerY);
+                                }
+                            });
+                        } else {
+                            console.log('Nenhum registro com marcador encontrado');
+                        }
+                        
+                        // Converter para PNG
+                        const pngDataUrl = canvas.toDataURL('image/png');
+                        console.log('PNG gerado com sucesso, tamanho:', pngDataUrl.length, 'caracteres');
+                        resolve(pngDataUrl);
+                        
+                    } catch (error) {
+                        console.error('Erro ao processar imagem:', error);
+                        reject(error);
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.error('Erro ao carregar imagem do croqui:', croquiUrl);
+                    reject(new Error('Falha ao carregar imagem: ' + croquiUrl));
+                };
+                
+                console.log('Iniciando carregamento da imagem...');
+                img.src = croquiUrl;
+                
+            } catch (error) {
+                console.error('Erro geral na geração de PNG:', error);
+                reject(error);
+            }
+        });
+    }
+
+    // Função para gerar e baixar PNG do croqui atual
+    function gerarCroquiPNG() {
+        console.log('Iniciando geração de PNG...');
+        
+        try {
+            // Verificar se há uma inspeção em andamento
+            if (!inspecaoEmAndamento || !inspecaoEmAndamento.croquiUrl) {
+                alert('Nenhum croqui selecionado. Selecione um croqui primeiro.');
+                return;
+            }
+
+            console.log('Croqui URL:', inspecaoEmAndamento.croquiUrl);
+
+            // Mostrar indicador de carregamento
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Gerando...';
+            btn.disabled = true;
+
+            // Criar canvas imediatamente
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            console.log('Canvas criado:', canvas.width, 'x', canvas.height);
+            
+            // Fundo branco
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Adicionar título
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('CROQUI DA ESTRUTURA', canvas.width / 2, 30);
+            
+            // Adicionar informações da estrutura
+            const nomeEstrutura = inspecaoEmAndamento.estrutura || inspecaoEmAndamento.tipoCroqui || 'Estrutura';
+            ctx.font = '16px Arial';
+            ctx.fillText(`Estrutura: ${nomeEstrutura}`, canvas.width / 2, 70);
+            ctx.fillText(`Tipo: ${inspecaoEmAndamento.tipoCroqui || 'Não especificado'}`, canvas.width / 2, 95);
+            ctx.fillText(`Data: ${new Date().toLocaleDateString('pt-BR')}`, canvas.width / 2, 120);
+            ctx.fillText(`URL: ${inspecaoEmAndamento.croquiUrl}`, canvas.width / 2, 145);
+            
+            console.log('Informações básicas desenhadas');
+            
+            // Adicionar marcadores se existirem
+            const registros = inspecaoEmAndamento.registros || [];
+            if (registros.length > 0) {
+                console.log('Adicionando', registros.length, 'marcador(es)');
+                registros.forEach((reg, i) => {
+                    if (reg.markerPos) {
+                        // Posicionar marcadores na área de texto
+                        const markerX = 100 + (i * 50);
+                        const markerY = 200;
+                        
+                        console.log(`Marcador ${i + 1}: ${reg.markerPos.x}%, ${reg.markerPos.y}% -> ${markerX}, ${markerY}`);
+                        
+                        // Círculo do marcador
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.beginPath();
+                        ctx.arc(markerX, markerY, 15, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        // Borda branca
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // Número
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText((i + 1).toString(), markerX, markerY);
+                        
+                        // Informações do marcador
+                        ctx.fillStyle = '#333';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'left';
+                        ctx.fillText(`Ponto ${i + 1}: ${reg.markerPos.x}%, ${reg.markerPos.y}%`, markerX + 25, markerY - 5);
+                    }
+                });
+            }
+            
+            console.log('Marcadores adicionados');
+            
+            // Tentar carregar imagem e adicionar ao PNG
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = function() {
+                console.log('Imagem carregada com sucesso!');
+                try {
+                    // Calcular proporções para a imagem
+                    const imgAspect = img.width / img.height;
+                    const canvasAspect = canvas.width / canvas.height;
+                    
+                    let drawWidth, drawHeight, offsetX, offsetY;
+                    
+                    if (imgAspect > canvasAspect) {
+                        drawWidth = canvas.width * 0.8;
+                        drawHeight = drawWidth / imgAspect;
+                        offsetX = (canvas.width - drawWidth) / 2;
+                        offsetY = 200; // Abaixo das informações
+                    } else {
+                        drawHeight = (canvas.height - 200) * 0.8;
+                        drawWidth = drawHeight * imgAspect;
+                        offsetX = (canvas.width - drawWidth) / 2;
+                        offsetY = 200;
+                    }
+                    
+                    // Desenhar imagem
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                    console.log('Imagem desenhada no canvas');
+                    
+                    // Redesenhar marcadores na posição correta sobre a imagem
+                    if (registros.length > 0) {
+                        registros.forEach((reg, i) => {
+                            if (reg.markerPos) {
+                                const markerX = offsetX + (reg.markerPos.x / 100) * drawWidth;
+                                const markerY = offsetY + (reg.markerPos.y / 100) * drawHeight;
+                                
+                                console.log(`Marcador ${i + 1} na imagem: ${markerX.toFixed(1)}, ${markerY.toFixed(1)}`);
+                                
+                                // Círculo do marcador
+                                ctx.fillStyle = '#e74c3c';
+                                ctx.beginPath();
+                                ctx.arc(markerX, markerY, 15, 0, 2 * Math.PI);
+                                ctx.fill();
+                                
+                                // Borda branca
+                                ctx.strokeStyle = 'white';
+                                ctx.lineWidth = 3;
+                                ctx.stroke();
+                                
+                                // Número
+                                ctx.fillStyle = 'white';
+                                ctx.font = 'bold 14px Arial';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText((i + 1).toString(), markerX, markerY);
+                            }
+                        });
+                    }
+                    
+                    // Gerar PNG com imagem
+                    gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+                    
+                } catch (error) {
+                    console.error('Erro ao processar imagem:', error);
+                    gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+                }
+            };
+            
+            img.onerror = function() {
+                console.log('Imagem não encontrada, gerando PNG sem imagem');
+                gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+            };
+            
+            // Definir timeout para não travar
+            setTimeout(() => {
+                console.log('Timeout atingido, gerando PNG sem imagem');
+                gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+            }, 2000);
+            
+            console.log('Tentando carregar imagem...');
+            
+            // Tentar carregar imagem diretamente (método mais simples)
+            const nomeArquivo = inspecaoEmAndamento.croquiUrl.replace('./', '');
+            console.log('Tentando carregar imagem:', nomeArquivo);
+            
+            const imgCroqui = new Image();
+            imgCroqui.crossOrigin = 'anonymous';
+            
+            imgCroqui.onload = function() {
+                console.log('✅ Imagem carregada com sucesso!');
+                console.log('Dimensões:', imgCroqui.width, 'x', imgCroqui.height);
+                
+                try {
+                    // Calcular proporções para a imagem
+                    const imgAspect = imgCroqui.width / imgCroqui.height;
+                    const canvasAspect = canvas.width / canvas.height;
+                    
+                    let drawWidth, drawHeight, offsetX, offsetY;
+                    
+                    if (imgAspect > canvasAspect) {
+                        drawWidth = canvas.width * 0.8;
+                        drawHeight = drawWidth / imgAspect;
+                        offsetX = (canvas.width - drawWidth) / 2;
+                        offsetY = 200; // Abaixo das informações
+                    } else {
+                        drawHeight = (canvas.height - 200) * 0.8;
+                        drawWidth = drawHeight * imgAspect;
+                        offsetX = (canvas.width - drawWidth) / 2;
+                        offsetY = 200;
+                    }
+                    
+                    console.log('Dimensões no canvas:', drawWidth.toFixed(1), 'x', drawHeight.toFixed(1));
+                    console.log('Posição no canvas:', offsetX.toFixed(1), offsetY.toFixed(1));
+                    
+                    // Desenhar imagem
+                    ctx.drawImage(imgCroqui, offsetX, offsetY, drawWidth, drawHeight);
+                    console.log('Imagem desenhada no canvas');
+                    
+                    // Redesenhar marcadores na posição correta sobre a imagem
+                    if (registros.length > 0) {
+                        registros.forEach((reg, i) => {
+                            if (reg.markerPos) {
+                                const markerX = offsetX + (reg.markerPos.x / 100) * drawWidth;
+                                const markerY = offsetY + (reg.markerPos.y / 100) * drawHeight;
+                                
+                                console.log(`Marcador ${i + 1} na imagem: ${markerX.toFixed(1)}, ${markerY.toFixed(1)}`);
+                                
+                                // Círculo do marcador
+                                ctx.fillStyle = '#e74c3c';
+                                ctx.beginPath();
+                                ctx.arc(markerX, markerY, 15, 0, 2 * Math.PI);
+                                ctx.fill();
+                                
+                                // Borda branca
+                                ctx.strokeStyle = 'white';
+                                ctx.lineWidth = 3;
+                                ctx.stroke();
+                                
+                                // Número
+                                ctx.fillStyle = 'white';
+                                ctx.font = 'bold 14px Arial';
+                                ctx.textAlign = 'center';
+                                ctx.textBaseline = 'middle';
+                                ctx.fillText((i + 1).toString(), markerX, markerY);
+                            }
+                        });
+                    }
+                    
+                    // Gerar PNG com imagem
+                    gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+                    
+                } catch (error) {
+                    console.error('Erro ao processar imagem:', error);
+                    gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+                }
+            };
+            
+            imgCroqui.onerror = function() {
+                console.log('❌ Erro ao carregar imagem, gerando PNG sem imagem');
+                gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText);
+            };
+            
+            imgCroqui.src = nomeArquivo;
+            
+        } catch (error) {
+            console.error('Erro geral:', error);
+            alert('Erro inesperado ao gerar PNG do croqui: ' + error.message);
+            
+            // Restaurar botão em caso de erro
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    }
+    
+
+    
+    // Função para testar se o arquivo existe
+    function testarArquivo() {
+        if (!inspecaoEmAndamento || !inspecaoEmAndamento.croquiUrl) {
+            alert('Nenhum croqui selecionado. Selecione um croqui primeiro.');
+            return;
+        }
+        
+        const nomeArquivo = inspecaoEmAndamento.croquiUrl.replace('./', '');
+        console.log('Testando arquivo:', nomeArquivo);
+        
+        // Método 1: Tentar carregar diretamente como imagem
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = function() {
+            console.log('✅ Arquivo encontrado e carregado!');
+            console.log('Dimensões:', img.width, 'x', img.height);
+            alert(`✅ Arquivo encontrado e carregado!\n\nArquivo: ${nomeArquivo}\nDimensões: ${img.width} x ${img.height} pixels\n\nA imagem pode ser usada no PNG!`);
+        };
+        
+        img.onerror = function() {
+            console.log('❌ Erro ao carregar imagem diretamente');
+            
+            // Método 2: Tentar com fetch (pode falhar por CORS)
+            fetch(nomeArquivo, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        const tamanho = response.headers.get('content-length');
+                        console.log('✅ Arquivo encontrado via fetch!');
+                        console.log('Tamanho:', tamanho, 'bytes');
+                        alert(`✅ Arquivo encontrado via fetch!\n\nArquivo: ${nomeArquivo}\nTamanho: ${tamanho} bytes\n\nMas há problemas de CORS para carregar a imagem.`);
+                    } else {
+                        console.log('❌ Arquivo não encontrado');
+                        alert(`❌ Arquivo não encontrado!\n\nArquivo: ${nomeArquivo}\nStatus: ${response.status}\n\nVerifique se o arquivo existe no diretório.`);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Erro ao testar arquivo:', error);
+                    alert(`❌ Erro ao testar arquivo!\n\nArquivo: ${nomeArquivo}\nErro: ${error.message}\n\nSolução: Abra o arquivo HTML através de um servidor local (http://localhost) em vez de file://`);
+                });
+        };
+        
+        img.src = nomeArquivo;
+    }
+    
+    // Função para gerar PNG final
+    function gerarPNGFinal(canvas, nomeEstrutura, registros, btn, originalText) {
+        try {
+            console.log('Gerando PNG final...');
+            
+            // Converter para PNG
+            const pngDataUrl = canvas.toDataURL('image/png');
+            console.log('PNG gerado com sucesso, tamanho:', pngDataUrl.length, 'caracteres');
+            
+            // Criar link de download
+            const link = document.createElement('a');
+            const nomeArquivo = `${nomeEstrutura}_Croqui_${new Date().toISOString().slice(0,10)}.png`;
+            link.download = nomeArquivo;
+            link.href = pngDataUrl;
+            
+            console.log('Link criado:', nomeArquivo);
+            
+            // Simular clique para baixar
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('PNG do croqui baixado com sucesso');
+            alert(`PNG do croqui gerado com sucesso!\n\nEstrutura: ${nomeEstrutura}\nMarcadores: ${registros.filter(r => r.markerPos).length}\nArquivo: ${nomeArquivo}`);
+            
+            // Restaurar botão
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            
+        } catch (error) {
+            console.error('Erro ao gerar PNG final:', error);
+            alert('Erro ao gerar PNG final: ' + error.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // Variáveis para arrastar marcadores
+    let modoArrastar = false;
+    let marcadorArrastando = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    // Função para ativar/desativar modo arrastar
+    function ativarModoArrastar() {
+        modoArrastar = !modoArrastar;
+        const btn = document.getElementById('btnArrastar');
+        
+        if (modoArrastar) {
+            btn.innerHTML = '✅ Modo Arrastar Ativo';
+            btn.style.background = '#28a745';
+            btn.style.color = 'white';
+            console.log('Modo arrastar ativado');
+        } else {
+            btn.innerHTML = '✋ Ativar Arrastar Marcadores';
+            btn.style.background = '#17a2b8';
+            btn.style.color = 'white';
+            console.log('Modo arrastar desativado');
+        }
+        
+        // Atualizar estilo dos marcadores
+        atualizarEstiloMarcadores();
+        
+        // Mostrar feedback visual
+        const marcadores = document.querySelectorAll('.marker');
+        if (marcadores.length > 0) {
+            if (modoArrastar) {
+                alert(`Modo arrastar ativado! Você pode arrastar ${marcadores.length} marcador(es) para reposicioná-los.`);
+            } else {
+                alert('Modo arrastar desativado. Clique nos marcadores para editar.');
+            }
+        } else {
+            if (modoArrastar) {
+                alert('Modo arrastar ativado! Adicione marcadores clicando no croqui primeiro.');
+            } else {
+                alert('Modo arrastar desativado.');
+            }
+        }
+    }
+
+    // Função para atualizar estilo dos marcadores
+    function atualizarEstiloMarcadores() {
+        const marcadores = document.querySelectorAll('.marker');
+        marcadores.forEach(marker => {
+            if (modoArrastar) {
+                marker.style.cursor = 'grab';
+                marker.style.border = '2px solid #007bff';
+                marker.title = 'Clique e arraste para mover';
+            } else {
+                marker.style.cursor = 'pointer';
+                marker.style.border = '2px solid white';
+                marker.title = 'Clique para editar';
+            }
+        });
+    }
+
+    // Função para adicionar eventos de arrastar aos marcadores
+    function adicionarEventosArrastar(marker, index) {
+        console.log('Adicionando eventos de arrastar ao marcador', index);
+        
+        marker.addEventListener('mousedown', function(e) {
+            console.log('Mouse down no marcador', index, 'Modo arrastar:', modoArrastar);
+            
+            if (!modoArrastar) {
+                console.log('Modo arrastar não está ativo');
+                return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            marcadorArrastando = marker;
+            const rect = marker.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            marker.style.cursor = 'grabbing';
+            marker.style.zIndex = '1000';
+            
+            console.log('Iniciando arrastar do marcador', index);
+            
+            document.addEventListener('mousemove', moverMarcador);
+            document.addEventListener('mouseup', pararArrastar);
+        });
+        
+        // Adicionar evento de clique para editar (apenas quando não está arrastando)
+        marker.addEventListener('click', function(e) {
+            console.log('Clique no marcador', index, 'Modo arrastar:', modoArrastar);
+            
+            if (!modoArrastar) {
+                e.stopPropagation();
+                // Encontrar o índice do marcador
+                const marcadores = document.querySelectorAll('.marker');
+                const index = Array.from(marcadores).indexOf(marker);
+                if (index !== -1) {
+                    console.log('Editando registro', index);
+                    editarRegistro(index);
+                }
+            }
+        });
+    }
+
+    // Função para mover marcador
+    function moverMarcador(e) {
+        if (!marcadorArrastando) {
+            console.log('Nenhum marcador sendo arrastado');
+            return;
+        }
+        
+        const container = document.getElementById('croquiContainer');
+        const rect = container.getBoundingClientRect();
+        
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Limitar dentro dos limites do container
+        const xLimitado = Math.max(0, Math.min(100, x));
+        const yLimitado = Math.max(0, Math.min(100, y));
+        
+        marcadorArrastando.style.left = `${xLimitado}%`;
+        marcadorArrastando.style.top = `${yLimitado}%`;
+        
+        // Adicionar classe visual de arrastando
+        marcadorArrastando.classList.add('arrastando');
+        
+        console.log('Movendo marcador para:', xLimitado.toFixed(1) + '%', yLimitado.toFixed(1) + '%');
+    }
+
+    // Função para parar de arrastar
+    function pararArrastar() {
+        if (!marcadorArrastando) return;
+        
+        // Atualizar posição no registro
+        const container = document.getElementById('croquiContainer');
+        const rect = container.getBoundingClientRect();
+        const markerRect = marcadorArrastando.getBoundingClientRect();
+        
+        const x = ((markerRect.left - rect.left) / rect.width) * 100;
+        const y = ((markerRect.top - rect.top) / rect.height) * 100;
+        
+        // Encontrar o índice do marcador
+        const marcadores = document.querySelectorAll('.marker');
+        const index = Array.from(marcadores).indexOf(marcadorArrastando);
+        
+        if (index !== -1 && inspecaoEmAndamento.registros[index]) {
+            inspecaoEmAndamento.registros[index].markerPos = { x, y };
+            console.log(`Marcador ${index + 1} movido para: ${x.toFixed(1)}%, ${y.toFixed(1)}%`);
+        }
+        
+        marcadorArrastando.classList.remove('arrastando');
+        marcadorArrastando.style.cursor = modoArrastar ? 'grab' : 'pointer';
+        marcadorArrastando.style.zIndex = 'auto';
+        marcadorArrastando = null;
+        
+        document.removeEventListener('mousemove', moverMarcador);
+        document.removeEventListener('mouseup', pararArrastar);
+    }
+
+    async function selecionarCroqui(tipo) {
+        inspecaoEmAndamento.tipoCroqui = tipo;
+        const container = document.getElementById('croquiContainer');
+        const buttons = document.getElementById('croquiButtons');
+        const img = document.getElementById('croquiImage');
+        const helpText = document.getElementById('croquiHelpText');
+
+        if (tipo && croquis[tipo]) {
+            inspecaoEmAndamento.croquiUrl = croquis[tipo];
+            
+            // Detectar formato da imagem
+            const formato = detectarFormatoImagem(croquis[tipo]);
+            console.log('Selecionando croqui:', tipo, 'Formato:', formato, 'URL:', croquis[tipo]);
+            
+            // Verificar se arquivo existe
+            const arquivoExiste = await verificarArquivoExiste(croquis[tipo]);
+            console.log('Arquivo existe:', arquivoExiste);
+            
+            if (img) {
+                img.src = croquis[tipo];
+                img.onload = function() {
+                    console.log('Croqui carregado com sucesso:', tipo, 'Dimensões:', img.naturalWidth, 'x', img.naturalHeight);
+                    
+                    if (container) {
+                        container.classList.remove('hidden');
+                    }
+                    if (buttons) {
+                        buttons.classList.remove('hidden');
+                    }
+                    if (helpText) {
+                        helpText.classList.remove('hidden');
+                    }
+                    desenharMarcadores();
+                };
+                img.onerror = function() {
+                    console.error('Erro ao carregar croqui:', croquis[tipo]);
+                    const mensagem = arquivoExiste 
+                        ? `Erro ao carregar o croqui (${formato}): ${croquis[tipo]}\n\nO arquivo existe mas não pode ser carregado. Verifique se:\n• O formato é suportado (JPG, PNG, GIF, BMP, WebP)\n• O arquivo não está corrompido\n• Não há problemas de CORS`
+                        : `Erro ao carregar o croqui (${formato}): ${croquis[tipo]}\n\nO arquivo não foi encontrado. Verifique se:\n• O arquivo existe no caminho especificado\n• O nome do arquivo está correto\n• O arquivo está na mesma pasta do HTML`;
+                    alert(mensagem);
+                };
+            }
+            
+            // Adicionar event listeners
+            setTimeout(() => {
+                adicionarEventListenersCroqui();
+            }, 100);
+        } else {
+            if (container) container.classList.add('hidden');
+            if (buttons) buttons.classList.add('hidden');
+            if (helpText) helpText.classList.add('hidden');
+        }
+    }
+
+    // Event listener do croqui será adicionado quando o elemento existir
+    function adicionarEventListenersCroqui() {
+        const croquiContainer = document.getElementById('croquiContainer');
+        if (croquiContainer) {
+            croquiContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('marker')) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                abrirFormRegistro(x, y);
+            });
+        }
+    }
+
+    function desenharMarcadores() {
+        const container = document.getElementById('marcadoresContainer');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (inspecaoEmAndamento.registros) {
+            inspecaoEmAndamento.registros.forEach((reg, i) => {
+                if (reg.markerPos) {
+                    const marker = document.createElement('div');
+                    marker.className = 'marker';
+                    marker.style.left = `${reg.markerPos.x}%`;
+                    marker.style.top = `${reg.markerPos.y}%`;
+                    marker.textContent = i + 1;
+                    
+                    // Adicionar eventos de arrastar
+                    adicionarEventosArrastar(marker, i);
+                    
+                    container.appendChild(marker);
+                }
+            });
+            
+            // Atualizar estilo dos marcadores
+            atualizarEstiloMarcadores();
+        }
+    }
+
+    // --- INICIALIZAÇÃO E INTEGRAÇÃO COM EXCEL/CSV ---
+    function carregarEstruturas(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const fileName = file.name.toLowerCase();
+        const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+        const isCSV = fileName.endsWith('.csv');
+        const isTSV = fileName.endsWith('.tsv') || fileName.endsWith('.txt');
+        
+        if (!isExcel && !isCSV && !isTSV) {
+            alert('❌ Formato não suportado!\n\n✅ Formatos aceitos:\n• Excel (.xlsx/.xls) - RECOMENDADO\n• CSV (.csv)\n• TSV (.tsv/.txt)\n\n💡 Use "Baixar Template Excel" para criar um arquivo com as colunas corretas!');
+            return;
+        }
+        
+        if (isExcel) {
+            console.log('📊 Processando arquivo Excel...');
+            carregarEstruturasDeExcel(file);
+        } else {
+            console.log('📄 Processando arquivo de texto...');
+            carregarEstruturasDeCSV(file, isTSV);
+        }
+    }
+    
+    function carregarEstruturasDeCSV(file, isTSV = false) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const rows = text.split(/\r?\n/).filter(row => row.trim() !== '');
+            
+            if (rows.length === 0) {
+                alert('Arquivo vazio ou sem dados válidos.');
+                return;
+            }
+            
+            // Detectar separador automaticamente
+            const firstRow = rows[0];
+            let separator = ',';
+            
+            if (isTSV) {
+                separator = '\t';
+            } else {
+                // Detectar automaticamente se é vírgula ou tabulação
+                const commaCount = (firstRow.match(/,/g) || []).length;
+                const tabCount = (firstRow.match(/\t/g) || []).length;
+                
+                if (tabCount > commaCount) {
+                    separator = '\t';
+                }
+            }
+            
+            const headers = rows[0].split(separator).map(h => h.trim());
+            const dataRows = rows.slice(1);
+            
+            console.log(`Separador detectado: ${separator === '\t' ? 'TAB' : 'VÍRGULA'}`);
+            console.log('Cabeçalhos:', headers);
+            
+            processarDadosEstruturas(headers, dataRows, separator);
+        };
+        reader.readAsText(file);
+    }
+    
+    function carregarEstruturasDeExcel(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                console.log('📋 Abas disponíveis:', workbook.SheetNames);
+                console.log('📊 Usando aba:', sheetName);
+                
+                // Converter para array de arrays
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 2) {
+                    alert('❌ Arquivo Excel deve ter pelo menos um cabeçalho e uma linha de dados.\n\n💡 Use o template Excel para criar um arquivo correto.');
+                    return;
+                }
+                
+                const headers = jsonData[0].map(h => h ? h.toString().trim() : '');
+                const dataRows = jsonData.slice(1);
+                
+                console.log('📝 Cabeçalhos detectados:', headers);
+                console.log('📊 Linhas de dados:', dataRows.length);
+                
+                processarDadosEstruturas(headers, dataRows);
+                
+            } catch (error) {
+                console.error('❌ Erro ao processar arquivo Excel:', error);
+                alert('❌ Erro ao processar arquivo Excel!\n\n💡 Verifique se:\n• O arquivo não está corrompido\n• Tem pelo menos um cabeçalho\n• Use o template Excel como base');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+    
+    function processarDadosEstruturas(headers, dataRows, separator = ',') {
+        const novaLista = { "Pórticos": [], "Semipórticos": [], "Carrinhos": [], "Passarelas": [], "Outros": [] };
+        const estruturasDetalhadas = [];
+        let count = 0;
+        
+        dataRows.forEach(row => {
+            // Garantir que temos pelo menos uma coluna
+            if (!row || row.length === 0) return;
+            
+            // Se row é string, dividir pelo separador
+            let cols;
+            if (typeof row === 'string') {
+                cols = row.split(separator).map(col => col ? col.toString().trim() : '');
+            } else {
+                cols = row.map(col => col ? col.toString().trim() : '');
+            }
+            
+            const id = cols[0] || '';
+            const localizacaoInicial = cols[1] || '';
+            const localizacaoFinal = cols[2] || '';
+            const pista = cols[3] || '';
+            const lado = cols[4] || '';
+            const latitude = cols[5] || '';
+            const longitude = cols[6] || '';
+            const largura = cols[7] || '';
+            const altura = cols[8] || '';
+            
+            if (id) {
+                count++;
+                const estrutura = {
+                    nome: id, // Usar ID como nome
+                    tipo: pista, // Usar PISTA como tipo
+                    codigo: id,
+                    localizacao: localizacaoInicial,
+                    km: localizacaoInicial,
+                    responsavel: '',
+                    ultimaInspecao: '',
+                    proximaInspecao: '',
+                    status: lado,
+                    observacoes: `Localização Final: ${localizacaoFinal}, Pista: ${pista}, Lado: ${lado}, Lat: ${latitude}, Long: ${longitude}, Largura: ${largura}m, Altura: ${altura}m`
+                };
+                
+                estruturasDetalhadas.push(estrutura);
+                
+                // Categorizar por pista
+                if (pista.toLowerCase().includes('sul')) {
+                    novaLista.Pórticos.push(id);
+                } else if (pista.toLowerCase().includes('norte')) {
+                    novaLista.Semipórticos.push(id);
+                } else {
+                    novaLista.Outros.push(id);
+                }
+            }
+        });
+        
+        // Salvar dados detalhados no localStorage
+        localStorage.setItem('estruturas_detalhadas', JSON.stringify(estruturasDetalhadas));
+        
+        const listaFormatada = Object.keys(novaLista).filter(cat => novaLista[cat].length > 0).map(cat => ({ categoria: cat, itens: novaLista[cat] }));
+        preencherSelectElementos(listaFormatada);
+        
+        // Mostrar resumo detalhado
+        const resumo = `✅ ${count} estruturas carregadas com sucesso!\n\n` +
+                      `📊 Distribuição por tipo:\n` +
+                      Object.keys(novaLista).filter(cat => novaLista[cat].length > 0)
+                          .map(cat => `• ${cat}: ${novaLista[cat].length}`).join('\n') +
+                      `\n\n💡 Agora você pode:\n` +
+                      `• Selecionar estruturas no formulário\n` +
+                      `• Ver detalhes com "Ver Estruturas Carregadas"\n` +
+                      `• Iniciar inspeções com dados completos`;
+        
+        alert(resumo);
+    }
+
+    function preencherSelectElementos(lista = []) { 
+        const select = document.getElementById('selectElemento');
+        select.innerHTML = '<option value="">Selecione na lista...</option>' +
+            lista.map(cat => `<optgroup label="${cat.categoria}">${cat.itens.map(el => `<option value="${el}">${el}</option>`).join('')}</optgroup>`).join('');
+    }
+    
+    function mostrarDetalhesEstrutura(nomeEstrutura) {
+        const estruturasDetalhadas = JSON.parse(localStorage.getItem('estruturas_detalhadas') || '[]');
+        const estrutura = estruturasDetalhadas.find(e => e.nome === nomeEstrutura);
+        
+        if (estrutura) {
+            const detalhes = `
+📋 DETALHES DA ESTRUTURA
+
+🏗️ Nome: ${estrutura.nome}
+📝 Tipo: ${estrutura.tipo}
+🔢 Código: ${estrutura.codigo}
+📍 Localização: ${estrutura.localizacao}
+🛣️ KM: ${estrutura.km}
+👤 Responsável: ${estrutura.responsavel}
+📅 Última Inspeção: ${estrutura.ultimaInspecao}
+📅 Próxima Inspeção: ${estrutura.proximaInspecao}
+✅ Status: ${estrutura.status}
+💬 Observações: ${estrutura.observacoes}
+            `;
+            alert(detalhes);
+        }
+    }
+    
+    function mostrarEstruturasCarregadas() {
+        const estruturasDetalhadas = JSON.parse(localStorage.getItem('estruturas_detalhadas') || '[]');
+        
+        if (estruturasDetalhadas.length === 0) {
+            alert('Nenhuma estrutura carregada. Carregue um arquivo CSV primeiro.');
+            return;
+        }
+        
+        // Agrupar por tipo
+        const agrupadas = {};
+        estruturasDetalhadas.forEach(estrutura => {
+            const tipo = estrutura.tipo || 'Sem tipo';
+            if (!agrupadas[tipo]) agrupadas[tipo] = [];
+            agrupadas[tipo].push(estrutura);
+        });
+        
+        let resumo = `📊 ESTRUTURAS CARREGADAS (${estruturasDetalhadas.length} total)\n\n`;
+        
+        Object.keys(agrupadas).forEach(tipo => {
+            resumo += `📋 ${tipo} (${agrupadas[tipo].length}):\n`;
+            agrupadas[tipo].forEach(estrutura => {
+                resumo += `  • ${estrutura.nome} - ${estrutura.codigo} - KM ${estrutura.km}\n`;
+            });
+            resumo += '\n';
+        });
+        
+        resumo += `💡 Clique em uma estrutura no dropdown para ver detalhes completos.`;
+        
+        alert(resumo);
+    }
+    
+    function selecionarEstrutura(nomeEstrutura) {
+        if (!nomeEstrutura) return;
+        
+        document.getElementById('estrutura').value = nomeEstrutura;
+        
+        // Mostrar detalhes da estrutura selecionada
+        const estruturasDetalhadas = JSON.parse(localStorage.getItem('estruturas_detalhadas') || '[]');
+        const estrutura = estruturasDetalhadas.find(e => e.nome === nomeEstrutura);
+        
+        if (estrutura) {
+            // Preencher todos os campos com os dados do Excel
+            document.getElementById('estrutura').value = estrutura.nome || '';
+            document.getElementById('localizacaoInicial').value = estrutura.localizacao || '';
+            document.getElementById('localizacaoFinal').value = estrutura.observacoes.split(', ').find(obs => obs.startsWith('Localização Final:'))?.replace('Localização Final: ', '') || '';
+            document.getElementById('pista').value = estrutura.tipo || '';
+            document.getElementById('lado').value = estrutura.status || '';
+            document.getElementById('latitude').value = estrutura.observacoes.split(', ').find(obs => obs.startsWith('Lat:'))?.replace('Lat: ', '') || '';
+            document.getElementById('longitude').value = estrutura.observacoes.split(', ').find(obs => obs.startsWith('Long:'))?.replace('Long: ', '') || '';
+            document.getElementById('largura').value = estrutura.observacoes.split(', ').find(obs => obs.startsWith('Largura:'))?.replace('Largura: ', '').replace('m', '') || '';
+            document.getElementById('altura').value = estrutura.observacoes.split(', ').find(obs => obs.startsWith('Altura:'))?.replace('Altura: ', '').replace('m', '') || '';
+            // Deixar observações em branco para ser preenchido pelo usuário
+            document.getElementById('observacoesEstrutura').value = '';
+            
+            // Mostrar informações da estrutura no console
+            const info = `✅ Estrutura selecionada: ${estrutura.nome}\n` +
+                        `📍 Localização Inicial: ${estrutura.localizacao}\n` +
+                        `📍 Localização Final: ${document.getElementById('localizacaoFinal').value}\n` +
+                        `🛣️ Pista: ${estrutura.tipo}\n` +
+                        `📍 Lado: ${estrutura.status}\n` +
+                        `🌍 Latitude: ${document.getElementById('latitude').value}\n` +
+                        `🌍 Longitude: ${document.getElementById('longitude').value}\n` +
+                        `📏 Largura: ${document.getElementById('largura').value}m\n` +
+                        `📏 Altura: ${document.getElementById('altura').value}m\n` +
+                        `💬 Observações: ${estrutura.observacoes}`;
+            
+            console.log(info);
+        }
+    }
+    
+    function exportarTemplateExcel() {
+        try {
+            const wb = XLSX.utils.book_new();
+            
+            // Dados do template com as colunas específicas (sem data)
+            const templateData = [
+                ['ID', 'LOCALIZAÇÃO INICIAL', 'LOCALIZAÇÃO FINAL', 'PISTA', 'LADO', 'LATITUDE', 'LONGITUDE', 'Largura (m)', 'ALTURA (m)'],
+                ['P01', 'KM 45+200', 'KM 45+250', 'SUL', 'Centro', '-22.880589', '-43.107044', '27.1', '9.02'],
+                ['P02', 'KM 47+500', 'KM 47+550', 'NORTE', 'Centro', '-22.880234', '-43.113689', '27.1', '9.02'],
+                ['P03', 'KM 50+100', 'KM 50+150', 'SUL', 'Centro', '-22.877784', '-43.110757', '27.1', '9.02'],
+                ['P04', 'KM 52+800', 'KM 52+850', 'NORTE', 'Direito', '-22.882453', '-43.115343', '7.0', '9.02'],
+                ['P05', 'KM 55+300', 'KM 55+350', 'SUL', 'Centro', '-22.885434', '-43.114078', '27.1', '9.02'],
+                ['', '', '', '', '', '', '', '', ''],
+                ['INSTRUÇÕES:', '', '', '', '', '', '', '', ''],
+                ['1. Preencha os dados nas linhas acima', '', '', '', '', '', '', '', ''],
+                ['2. ID: Código único da estrutura (ex: P01, P02, etc.)', '', '', '', '', '', '', '', ''],
+                ['3. PISTA: SUL, NORTE, NORTE/SUL', '', '', '', '', '', '', '', ''],
+                ['4. LADO: Centro, Direito, Esquerdo', '', '', '', '', '', '', '', ''],
+                ['5. Coordenadas: Use ponto (.) para decimais', '', '', '', '', '', '', '', ''],
+                ['6. Salve o arquivo e carregue no app', '', '', '', '', '', '', '', '']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            
+            // Ajustar largura das colunas
+            const colWidths = [
+                { wch: 8 },  // ID
+                { wch: 18 }, // LOCALIZAÇÃO INICIAL
+                { wch: 18 }, // LOCALIZAÇÃO FINAL
+                { wch: 10 }, // PISTA
+                { wch: 10 }, // LADO
+                { wch: 12 }, // LATITUDE
+                { wch: 12 }, // LONGITUDE
+                { wch: 12 }, // Largura (m)
+                { wch: 12 }  // ALTURA (m)
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Adicionar formatação (cores de fundo para cabeçalho)
+            ws['A1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['B1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['C1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['D1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['E1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['F1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['G1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['H1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['I1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            ws['J1'].s = { fill: { fgColor: { rgb: "CCCCCC" } }, font: { bold: true } };
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Estruturas');
+            
+            // Salvar arquivo
+            const fileName = `Template_Estruturas_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            alert('✅ Template Excel baixado com sucesso!\n\n📝 Instruções:\n1. Preencha os dados nas linhas acima\n2. Tipos: Pórtico, Semipórtico, Carrinho, Passarela\n3. Datas: AAAA-MM-DD\n4. Salve e carregue no app');
+            
+        } catch (error) {
+            console.error('Erro ao gerar template Excel:', error);
+            alert('Erro ao gerar template Excel. Verifique o console para mais detalhes.');
+        }
+    }
+    
+
+
+    window.addEventListener('DOMContentLoaded', function () { 
+        preencherSelectElementos([]); 
+        atualizarListaInspecoes(); 
+        showTab('listaInspecoesTab');
+        
+        // Adicionar event listeners quando necessário
+        setTimeout(() => {
+            adicionarEventListeners();
+            adicionarEventListenersCroqui();
+        }, 100);
+    });
+    
+    // --- FUNÇÕES DE GRÁFICOS ---
+    
+
+    </script>
+    
+    <script>
+    // Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('❌ Falha no registro do Service Worker:', error);
+                });
+        });
+    }
+    
+    // Instalar PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('📱 PWA pode ser instalado');
+        
+        // Mostrar botão de instalação se desejar
+        // showInstallButton();
+    });
+    
+    // Função para mostrar botão de instalação (opcional)
+    function showInstallButton() {
+        const installButton = document.createElement('button');
+        installButton.textContent = '📱 Instalar App';
+        installButton.className = 'btn btn-primary';
+        installButton.style.position = 'fixed';
+        installButton.style.top = '10px';
+        installButton.style.right = '10px';
+        installButton.style.zIndex = '9999';
+        installButton.onclick = () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ PWA instalado');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        };
+        document.body.appendChild(installButton);
+    }
+    </script>
+</body>
+</html>

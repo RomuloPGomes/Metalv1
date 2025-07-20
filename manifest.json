@@ -1,0 +1,27 @@
+{
+  "name": "Inspeção Estruturas - Ecovias Ponte",
+  "short_name": "Inspeção Ponte",
+  "start_url": "./inspecao.html",
+  "display": "standalone",
+  "background_color": "#2980b9",
+  "theme_color": "#2980b9",
+  "description": "Sistema de inspeção de estruturas metálicas da Ecovias Ponte.",
+  "scope": "./",
+  "orientation": "portrait",
+  "categories": ["productivity", "utilities"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMyOTgwYjkiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik0xMiAyTDIgN3YxMGMwIDUuNTUgNC40NSAxMCAxMCAxMGgxMGM1LjU1IDAgMTAtNC40NSAxMC0xMFY3bC0xMC01em0wIDJsOCA1djEwYzAgNC40MS0zLjU5IDgtOCA4cy04LTMuNTktOC04Vjd6Ii8+CjxwYXRoIGQ9Ik0xMiA2djZoNnYtNnptMCA4djZoNnYtNnoiLz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMyOTgwYjkiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPgo8cGF0aCBkPSJNMTIgMkwyIDd2MTBjMCA1LjU1IDQuNDUgMTAgMTAgMTBoMTBjNS41NSAwIDEwLTQuNDUgMTAtMTBWN2wtMTAtNXptMCAybDggNXYxMGMwIDQuNDEtMy41OSA4LTggOHMtOC0zLjU5LTgtOFY3eiIvPgo8cGF0aCBkPSJNMTIgNnY2aDZ2LTZ6bTAgOHY2aDZ2LTZ6Ii8+Cjwvc3ZnPgo8L3N2Zz4K",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+} 
